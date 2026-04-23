@@ -103,34 +103,70 @@
             </div>
 
             <!-- TPL 04: MINIMAL CENTERED (Active by default based on mockup) -->
-            <div id="tpl-04" class="tpl-layer absolute inset-0 flex flex-col bg-bg z-10 w-full h-full">
-                <div class="px-8 pt-10 flex justify-between items-center text-[8px] font-black tracking-[0.2em] uppercase">
+            <div id="tpl-04" class="tpl-layer absolute inset-0 flex flex-col bg-bg z-10 w-full h-full relative">
+                <!-- Atmospheric lighting overlay -->
+                <div class="absolute inset-0 bg-gradient-to-b from-white/10 to-black/40 pointer-events-none"></div>
+
+                <div class="px-8 pt-10 flex justify-between items-center text-[8px] font-black tracking-[0.2em] relative z-20">
                     <div class="flex items-center gap-2">
                         <div class="flex gap-[3.5px]">
                             <div class="w-[7px] h-[7px] rounded-full bg-[#00b1f1]"></div>
-                            <div class="w-[7px] h-[7px] rounded-full bg-[#ff8000]"></div>
                             <div class="w-[7px] h-[7px] rounded-full bg-[#00e054]"></div>
+                            <div class="w-[7px] h-[7px] rounded-full bg-[#ff8000]"></div>
                         </div>
-                        <span class="text-white ml-0.5 tracking-[0.25em]" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">LETTERBOXD</span>
+                        <span class="text-white ml-0.5 tracking-[0.25em]" style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">LETTERBOXD</span>
                     </div>
-                    <span class="text-white" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">@<span class="cv-user"></span></span>
+                    <span class="text-white" style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">@<span class="cv-user"></span></span>
                 </div>
         
-                <div class="flex-1 flex flex-col items-center justify-center pt-8">
-                    <img src="" class="cv-poster w-[55%] aspect-[2/3] object-cover rounded-xl shadow-[0_30px_60px_rgba(0,0,0,0.7)] border border-white/5 mb-6" crossorigin="anonymous">
-                    <h2 class="cv-title text-center text-[30px] font-black text-white leading-[1.1] tracking-tight drop-shadow-md px-4 line-clamp-1"></h2>
-                    <div class="flex items-center gap-3 mt-3">
-                        <div class="h-px w-5 bg-white/10"></div>
-                        <span class="cv-year text-[9px] font-black tracking-[0.2em] text-white/40"></span>
-                        <div class="h-px w-5 bg-white/10"></div>
+                <div class="flex-1 flex flex-col items-center justify-center pt-8 relative z-20">
+                    <img src="" class="cv-poster w-[55%] aspect-[2/3] object-cover rounded-[1rem] shadow-[0_30px_60px_rgba(0,0,0,0.8)] border border-white/5 mb-8" crossorigin="anonymous">
+                    <h2 class="cv-title text-center text-[28px] font-black text-white leading-[1.1] tracking-tight drop-shadow-md px-4 line-clamp-1"></h2>
+                    <div class="flex items-center gap-3 mt-1.5 mb-5">
+                        <div class="h-[1.5px] w-5 bg-white/20"></div>
+                        <span class="cv-year text-[9px] font-black tracking-[0.25em] text-white"></span>
+                        <div class="h-[1.5px] w-5 bg-white/20"></div>
                     </div>
-                    <div class="cv-rating text-[#111] flex justify-center mt-5 text-sm tracking-[0.1em] drop-shadow-md" style="-webkit-text-stroke: 1px var(--accent-color); color: var(--accent-color);"></div>
+                    <div class="cv-rating text-[#111] flex justify-center text-sm tracking-[0.1em] drop-shadow-sm" style="color: #111; -webkit-text-stroke: 0.5px rgba(255,255,255,0.2);"></div>
                 </div>
         
-                <div class="px-8 pb-10 w-full pt-4">
-                    <div class="cv-rev-container w-full border border-white/10 rounded-[1.25rem] p-6 bg-gradient-to-b from-white/[0.03] to-transparent shadow-xl min-h-[90px] flex items-center justify-center">
-                        <p class="cv-review-text text-center italic font-serif text-[14px] font-medium text-white/95 leading-[1.6] line-clamp-3"></p>
+                <div class="px-8 pb-10 w-full relative z-20">
+                    <div class="cv-rev-container w-full border border-white/10 rounded-[1.25rem] p-6 bg-white/5 shadow-2xl min-h-[90px] flex items-center justify-center backdrop-blur-md">
+                        <p class="cv-review-text text-center italic font-serif text-[15px] font-medium text-white/95 leading-[1.6] line-clamp-3"></p>
                     </div>
+                </div>
+            </div>
+
+            <!-- TPL 05: MONTHLY -->
+            <div id="tpl-05" class="tpl-layer absolute inset-0 flex flex-col bg-bg hidden z-10 w-full h-full p-8 pb-6 relative">
+                <!-- Atmospheric overlay -->
+                <div class="absolute inset-0 bg-gradient-to-b from-white/10 to-black/30 pointer-events-none"></div>
+                
+                <!-- Top Header -->
+                <div class="flex items-start justify-between relative z-20 border-b border-white/10 pb-4 mb-5">
+                    <div>
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <i data-lucide="user" class="w-2.5 h-2.5 text-white/50"></i>
+                            <span class="text-[7px] font-black tracking-[0.2em] text-white/50 uppercase"><span class="cv-user"></span>'S</span>
+                        </div>
+                        <h2 id="monthly-title" class="text-[26px] font-sans font-bold tracking-tight text-white leading-none"></h2>
+                    </div>
+                    <div class="flex items-center gap-1 pt-1 opacity-90">
+                        <div class="w-[5px] h-[5px] rounded-full bg-[#ff8000]"></div>
+                        <div class="w-[5px] h-[5px] rounded-full bg-[#00e054]"></div>
+                        <div class="w-[5px] h-[5px] rounded-full bg-[#00b1f1]"></div>
+                        <span class="text-[7.5px] font-bold tracking-[0.05em] text-white ml-1">Letterboxd</span>
+                    </div>
+                </div>
+                
+                <!-- Grid -->
+                <div id="monthly-grid" class="flex-1 grid grid-cols-3 gap-x-3 gap-y-4 relative z-20 content-start">
+                    <!-- Cells generated by JS -->
+                </div>
+                
+                <!-- Footer -->
+                <div class="relative z-20 w-full text-center mt-3 pt-3">
+                    <span class="text-[6.5px] font-bold tracking-[0.15em] text-white/20 uppercase">Made with instaboxd.com</span>
                 </div>
             </div>
 

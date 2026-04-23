@@ -105,6 +105,75 @@ function setImages(selector, src) {
     document.querySelectorAll(selector).forEach(el => el.src = src);
 }
 
+function renderMonthlyTemplate() {
+    const grid = document.getElementById('monthly-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    // Top 9 latest entries to fit the 3x3 layout safely
+    const top9 = entriesRaw.slice(0, 9);
+    
+    top9.forEach((e, i) => {
+        const item = parseRawItem(e);
+        let heartHTML = item.rating >= 4 ? `<span class="text-white ml-0.5" style="font-size:7px;">♥</span>` : '';
+        const fullStars = Math.max(0, Math.floor(item.rating));
+        const halfStar = (item.rating % 1 !== 0) ? '½' : '';
+        const ratingStr = '★'.repeat(fullStars) + halfStar;
+        
+        const cell = document.createElement('div');
+        cell.className = 'flex flex-col';
+        cell.innerHTML = `
+            <div class="aspect-[2/3] w-full rounded shadow-[0_5px_15px_rgba(0,0,0,0.5)] overflow-hidden bg-white/5 border border-white/10 mb-1.5 relative">
+                <img src="/api/proxy-image?url=${encodeURIComponent(item.posterUrl)}" class="w-full h-full object-cover">
+            </div>
+            <div class="flex justify-between items-center text-[7.5px] text-white/80 px-0.5">
+                <div class="flex items-center">
+                    <span class="tracking-widest">${ratingStr}</span> ${heartHTML}
+                </div>
+                <span class="text-white/40">${top9.length - i}</span>
+            </div>
+        `;
+        grid.appendChild(cell);
+        
+        // Lazy load high-res into the grid cells specifically
+        fetch(`/api/tmdb/search?query=${encodeURIComponent(item.movieTitle)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data?.results?.length > 0) {
+                    let match = data.results[0];
+                    if (item.movieYear) {
+                        const ym = data.results.find(r => r.release_date && r.release_date.startsWith(item.movieYear));
+                        if (ym) match = ym;
+                    }
+                    if (match?.poster_path) {
+                        const highResUrl = `https://image.tmdb.org/t/p/w300${match.poster_path}`;
+                        const imgEl = cell.querySelector('img');
+                        // No blob needed here since it's typically fine for internal rendering, but let's use it for export safety!
+                        fetch(`/api/proxy-image?url=${encodeURIComponent(highResUrl)}`)
+                            .then(r => r.blob())
+                            .then(blob => {
+                                if (imgEl) imgEl.src = URL.createObjectURL(blob);
+                            }).catch(() => {});
+                    }
+                }
+            })
+            .catch(e => console.warn(e));
+    });
+
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    let targetMonth = "Archive";
+    let targetYear = "";
+    if (top9.length > 0) {
+        const d = new Date(top9[0].pubDate);
+        if (!isNaN(d.valueOf())) {
+            targetMonth = months[d.getMonth()];
+            targetYear = d.getFullYear();
+        }
+    }
+    const titleEl = document.getElementById('monthly-title');
+    if (titleEl) titleEl.innerText = `${targetMonth} ${targetYear}`;
+}
+
 async function populateData() {
     setText('.cv-title', entry.movieTitle || 'UNKNOWN');
     setText('.cv-year', entry.movieYear ? `— ${entry.movieYear} —` : ''); // Styled like mockup
@@ -162,6 +231,8 @@ async function populateData() {
             el.innerText = `Watched on Letterboxd.`;
         });
     }
+
+    renderMonthlyTemplate();
 }
 
 function renderControls() {
