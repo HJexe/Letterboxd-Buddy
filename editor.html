@@ -7,99 +7,159 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/css/styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        .canvas-bg { background: radial-gradient(circle at top left, #1e1e3f 0%, #0d0f11 100%); }
-    </style>
 </head>
-<body class="bg-[#0d0f11] text-white flex flex-col md:flex-row-reverse h-screen overflow-hidden">
-    <!-- 1. CANVAS AREA -->
-    <main class="flex-1 overflow-auto flex items-center justify-center p-6 md:p-12 relative bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
-        <div id="export-box" class="w-full max-w-[400px] aspect-[9/16] bg-[#14181c] rounded-3xl overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] relative transition-all duration-500 canvas-bg">
-            <!-- Layers -->
-            <div id="layer-poster" class="absolute inset-0 transition-all duration-700">
-                <img id="cv-poster" src="" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
-            </div>
+<body class="bg-[#0b0d0f] text-white flex flex-col md:flex-row h-screen overflow-hidden font-display">
 
-            <div id="layer-content" class="absolute inset-0 p-8 flex flex-col justify-end space-y-6 pointer-events-none">
-                <div class="space-y-2">
-                    <h2 id="cv-title" class="text-4xl md:text-5xl font-black italic uppercase italic tracking-tighter leading-[0.85]"></h2>
-                    <p id="cv-year" class="text-lg font-bold opacity-60 italic"></p>
-                </div>
-                <div id="cv-rating" class="flex text-4xl text-[#00e054] tracking-tight"></div>
-                <div id="cv-review-box" class="hidden bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10 italic text-sm leading-relaxed font-light shadow-2xl">
-                    "<span id="cv-review-text"></span>"
-                </div>
-            </div>
-
-            <!-- Branding -->
-            <div class="absolute top-8 left-8 flex items-center space-x-3 opacity-60">
-                <div class="flex space-x-1">
-                    <div class="w-2 h-2 rounded-full bg-[#ff8000]"></div>
-                    <div class="w-2 h-2 rounded-full bg-[#00e054]"></div>
-                </div>
-                <span id="cv-user" class="text-[9px] font-black uppercase tracking-[0.3em]"></span>
-            </div>
-        </div>
-
-        <!-- Global UI -->
-        <div class="absolute top-8 right-8 flex space-x-3 z-[100]">
-            <button id="btn-download" class="p-4 bg-[#00e054] text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-2xl shadow-[#00e054]/20 group">
-                <i data-lucide="download" class="w-6 h-6"></i>
-            </button>
-            <a href="/gallery.html" class="p-4 bg-white/5 backdrop-blur-xl text-white rounded-full border border-white/10 hover:bg-white/10 transition-all">
-                <i data-lucide="x" class="w-6 h-6"></i>
+    <!-- 1. SIDEBAR CONTROLS (Left side now for ergonomic flow) -->
+    <aside class="w-full md:w-[380px] bg-[#101215] border-t md:border-t-0 md:border-r border-white/5 flex flex-col shadow-2xl z-50">
+        <header class="p-6 border-b border-white/5 flex items-center justify-between">
+            <h3 class="font-black italic uppercase tracking-[0.2em] text-lg text-white">Studio</h3>
+            <a href="/gallery.html" class="text-xs font-bold text-gray-500 hover:text-white uppercase tracking-widest transition-colors flex items-center">
+                <i data-lucide="chevron-left" class="w-3 h-3 mr-1"></i> Back
             </a>
-        </div>
-    </main>
-
-    <!-- 2. SIDEBAR CONTROLS -->
-    <aside class="w-full md:w-[380px] bg-[#14181c] border-t md:border-t-0 md:border-r border-white/5 flex flex-col shadow-2xl z-50">
-        <header class="p-6 border-b border-white/5 flex items-center justify-between bg-[#1b2127]">
-            <h3 class="font-black italic uppercase tracking-tighter text-lg text-[#00e054]">Design Studio</h3>
-            <div class="flex space-x-1">
-                <div class="w-2 h-2 rounded-full bg-[#00e054] animate-pulse"></div>
-            </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-8 space-y-12 bg-[#14181c]">
+        <div class="flex-1 overflow-auto p-6 space-y-10 scrollbar-hide">
             <!-- Templates -->
-            <section class="space-y-5">
-                <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600">Cinematic Template</h4>
+            <section class="space-y-4">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Layout Engine</h4>
                 <div class="grid grid-cols-2 gap-3">
-                    <button class="tpl-btn glass p-6 rounded-2xl border-white/5 transition-all text-center group active border-[#00e054]/50 bg-[#00e054]/5" data-tpl="full">
-                        <div class="w-full aspect-[2/3] bg-gradient-to-br from-[#00e054]/20 to-transparent rounded-lg mb-3 border border-white/5"></div>
-                        <span class="text-[9px] font-black uppercase tracking-widest text-[#00e054]">Full Bleed</span>
+                    <button class="tpl-btn glass p-4 text-left rounded-xl transition-all border-white/5 opacity-50 hover:opacity-100" data-tpl="tpl-01">
+                        <span class="block text-accent font-black text-xs mb-1">01</span>
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-gray-300">Full Bleed</span>
                     </button>
-                    <button class="tpl-btn glass p-6 rounded-2xl border-white/5 transition-all text-center group opacity-50" data-tpl="alt">
-                        <div class="w-full aspect-[2/3] bg-gradient-to-br from-[#ff8000]/20 to-transparent rounded-lg mb-3 border border-white/5"></div>
-                        <span class="text-[9px] font-black uppercase tracking-widest">Minimal</span>
+                    <button class="tpl-btn glass p-4 text-left rounded-xl transition-all border-white/5 opacity-50 hover:opacity-100" data-tpl="tpl-02">
+                        <span class="block text-accent font-black text-xs mb-1">02</span>
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-gray-300">Title Gradient</span>
+                    </button>
+                    <button class="tpl-btn glass p-4 text-left rounded-xl transition-all border-white/5 opacity-50 hover:opacity-100" data-tpl="tpl-03">
+                        <span class="block text-accent font-black text-xs mb-1">03</span>
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-gray-300">Split Card</span>
+                    </button>
+                    <button class="tpl-btn glass p-4 text-left rounded-xl transition-all border-white/5 opacity-50 hover:opacity-100" data-tpl="tpl-04">
+                        <span class="block text-accent font-black text-xs mb-1">04</span>
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-gray-300">Minimal Center</span>
                     </button>
                 </div>
             </section>
 
             <!-- Accents -->
-            <section class="space-y-5">
-                <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600">Color Palette</h4>
-                <div class="flex flex-wrap gap-4" id="accent-list">
-                    <!-- Dynamic -->
+            <section class="space-y-4">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Accent Color</h4>
+                <div class="flex flex-wrap gap-3" id="accent-list">
+                    <!-- Dynamic from JS -->
                 </div>
             </section>
 
-            <!-- Atmospheres -->
-            <section class="space-y-5">
-                <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600">Atmosphere</h4>
-                <div class="grid grid-cols-4 gap-3" id="bg-list">
-                    <!-- Dynamic -->
+             <!-- BGs -->
+             <section class="space-y-4">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Custom Backdrop</h4>
+                <div class="flex flex-wrap gap-3" id="bg-list">
+                    <!-- Dynamic from JS -->
                 </div>
             </section>
         </div>
 
-        <footer class="p-6 bg-black/40 border-t border-white/5">
-            <div class="text-[8px] font-black uppercase tracking-[0.5em] text-gray-600 text-center">Engine: Vanilla v2.0</div>
+        <footer class="p-6 border-t border-white/5">
+            <button id="btn-download" class="w-full py-4 bg-accent text-black font-black uppercase tracking-[0.3em] text-[10px] rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-[0_0_30px_var(--accent-color)_inset]">
+                Export Story
+            </button>
         </footer>
     </aside>
 
+    <!-- 2. CANVAS AREA -->
+    <main class="flex-1 overflow-auto flex items-center justify-center p-6 md:p-12 relative pattern-bg">
+        <!-- Render Target -->
+        <div id="export-box" class="w-full max-w-[380px] aspect-[9/16] bg-[#000] rounded-[2rem] overflow-hidden shadow-[0_30px_80px_-10px_rgba(0,0,0,0.9)] relative transition-all duration-500 transform-gpu" style="--accent-color: #ff8000; --bg-color: #0b0c0e;">
+            
+            <!-- TPL 01: FULL BLEED -->
+            <div id="tpl-01" class="tpl-layer absolute inset-0 flex flex-col justify-between p-7 hidden z-10">
+                <img src="" class="cv-poster absolute inset-0 w-full h-full object-cover" crossorigin="anonymous">
+                <div class="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent"></div>
+                
+                <div class="relative z-20 flex justify-center pt-2">
+                    <span class="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full text-[8.5px] font-black tracking-[0.2em] text-white/90 uppercase drop-shadow-md">LETTERBOXD • @<span class="cv-user"></span></span>
+                </div>
+                
+                <div class="relative z-20 flex flex-col gap-4 pb-2">
+                    <h2 class="cv-title text-4xl font-black leading-[0.9] text-white drop-shadow-xl tracking-tight"></h2>
+                    <div class="cv-rev-container bg-[#1c1a18]/70 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl">
+                        <p class="text-accent text-2xl leading-none font-serif font-black">"</p>
+                        <p class="cv-review-text text-[13px] font-medium text-white/95 mt-1 mb-4 line-clamp-4 leading-relaxed tracking-wide"></p>
+                        <div class="cv-rating text-accent text-sm tracking-widest flex drop-shadow-md"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TPL 02: TITLE GRADIENT -->
+            <div id="tpl-02" class="tpl-layer absolute inset-0 flex flex-col justify-between p-8 hidden z-10">
+                <img src="" class="cv-poster absolute inset-0 w-full h-full object-cover" crossorigin="anonymous">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent h-[75%] top-auto"></div>
+                
+                <div class="relative z-20 flex justify-center pt-2">
+                    <span class="text-[9px] font-black tracking-[0.2em] text-[#e0e0e0] drop-shadow-md uppercase">LETTERBOXD • @<span class="cv-user"></span></span>
+                </div>
+                
+                <div class="relative z-20 flex flex-col pb-4 text-center">
+                    <span class="cv-year text-accent text-sm font-black tracking-[0.25em] mb-2 drop-shadow-md"></span>
+                    <h2 class="cv-title text-5xl font-black text-accent drop-shadow-2xl leading-[0.85] tracking-tighter uppercase px-2"></h2>
+                    <div class="cv-rating text-accent flex justify-center mt-4 text-xs tracking-widest hidden"></div> <!-- Rating hidden for pure title design, but populated -->
+                </div>
+            </div>
+
+            <!-- TPL 03: SPLIT CARD -->
+            <div id="tpl-03" class="tpl-layer absolute inset-0 flex flex-col bg-bg hidden z-10">
+                <div class="h-[55%] relative">
+                    <img src="" class="cv-poster absolute inset-0 w-full h-full object-cover" crossorigin="anonymous">
+                    <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/20 to-transparent"></div>
+                </div>
+                <div class="h-[45%] px-7 pb-8 flex flex-col justify-end">
+                    <div class="flex items-center text-[9px] font-black tracking-[0.2em] text-[#888] mb-4">
+                        <span class="cv-year border border-[#888]/30 px-3 py-1 rounded-full text-accent"></span>
+                        <span class="mx-3">•</span>
+                        <span class="cv-genres">FILM DIARY</span>
+                    </div>
+                    <h2 class="cv-title text-3xl font-black text-white leading-[1.1] mb-2 tracking-tight"></h2>
+                    <p class="cv-review-text text-[13px] italic text-[#a0a0a0] line-clamp-3 mb-auto mt-2 font-serif"></p>
+                    
+                    <div class="flex justify-between items-end mt-4">
+                        <div class="cv-rev-container">
+                            <div class="cv-rating px-3 py-1.5 rounded-full border border-accent/40 text-accent text-xs tracking-widest flex items-center"></div>
+                        </div>
+                        <span class="text-[10px] font-bold tracking-widest text-[#666] uppercase">@<span class="cv-user"></span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TPL 04: MINIMAL CENTERED -->
+            <div id="tpl-04" class="tpl-layer absolute inset-0 flex flex-col bg-bg p-8 hidden z-10">
+                <div class="flex items-center gap-1.5 pt-1">
+                    <div class="w-[5px] h-[5px] rounded-full bg-[#ff8000]"></div>
+                    <div class="w-[5px] h-[5px] rounded-full bg-[#00e054]"></div>
+                    <div class="w-[5px] h-[5px] rounded-full bg-[#00b1f1]"></div>
+                    <span class="text-[7.5px] font-black tracking-[0.3em] text-[#555] ml-2 mt-[1px]">LETTERBOXD</span>
+                </div>
+                
+                <div class="flex-1 flex flex-col items-center justify-center mt-6">
+                    <img src="" class="cv-poster w-[65%] aspect-[2/3] object-cover rounded-xl shadow-[0_30px_60px_rgba(0,0,0,0.6)] border border-white/5 mb-8" crossorigin="anonymous">
+                    
+                    <h2 class="cv-title text-center text-3xl font-black text-white leading-tight tracking-tight drop-shadow-md"></h2>
+                    <span class="cv-year text-center text-[#666] text-[10px] font-black tracking-[0.2em] mt-3"></span>
+                    
+                    <p class="cv-review-text text-[13px] italic text-[#ccc] text-center px-4 line-clamp-4 mt-6 font-serif"></p>
+                    
+                    <div class="mt-8 text-center flex items-center gap-2">
+                        <div class="w-4 h-[1px] bg-accent/50"></div>
+                        <span class="text-[9px] font-black text-accent tracking-[0.25em] uppercase">@<span class="cv-user"></span></span>
+                        <div class="w-4 h-[1px] bg-accent/50"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- External Libs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
     <script type="module" src="/js/editor.js"></script>
     <script>lucide.createIcons();</script>

@@ -18,52 +18,58 @@ async function startServer() {
 
   // Proxy for Letterboxd RSS with hardened headers to avoid blocking
   app.get("/api/letterboxd/:username", async (req, res) => {
-    const { username } = req.params;
-    
-    // Test both common URL variants
-    const urls = [
-      `https://letterboxd.com/${username}/rss/`,
-      `https://${username}.letterboxd.com/rss/`
-    ];
-
-    for (const rssUrl of urls) {
-      // List of UA to try in sequence
-      const userAgents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Letterboxd/3.0 (iPhone; iOS 17.0; Scale/3.00)',
-        'RSS-Parser/3.13.0',
+    try {
+      const { username } = req.params;
+      
+      // Test both common URL variants
+      const urls = [
+        `https://letterboxd.com/${username}/rss/`,
+        `https://${username}.letterboxd.com/rss/`
       ];
 
-      for (const [idx, ua] of userAgents.entries()) {
-        try {
-          const response = await axios.get(rssUrl, {
-            headers: {
-              'User-Agent': ua,
-              'Accept': 'text/xml,application/xml,application/rss+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
-              'Referer': 'https://letterboxd.com/',
-            },
-            timeout: 12000,
-            validateStatus: (status) => status < 500, // Handle 404s gracefully in code
-          });
-          
-          if (response.status === 200 && response.data && response.data.includes('<rss')) {
-            const feed = await parser.parseString(response.data);
-            return res.json(feed);
-          }
-        } catch (error: any) {
-          console.warn(`RSS attempt failed for ${username} at ${rssUrl} with ${ua}: ${error.message}`);
-        }
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    }
+      for (const rssUrl of urls) {
+        // List of UA to try in sequence
+        const userAgents = [
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Letterboxd/3.0 (iPhone; iOS 17.0; Scale/3.00)',
+          'RSS-Parser/3.13.0',
+        ];
 
-    return res.status(500).json({ 
-      error: "Profile not found or access denied", 
-      suggestion: "Make sure the username is correct and the diary is public."
-    });
+        for (const [idx, ua] of userAgents.entries()) {
+          try {
+            const response = await axios.get(rssUrl, {
+              headers: {
+                'User-Agent': ua,
+                'Accept': 'text/xml,application/xml,application/rss+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
+                'Referer': 'https://letterboxd.com/',
+              },
+              timeout: 8000, // Reduced to ensure fast failover
+              validateStatus: (status) => status < 500, // Handle 404s gracefully in code
+            });
+            
+            // Check for valid XML/RSS response
+            if (response.status === 200 && response.data && typeof response.data === 'string' && response.data.includes('<rss')) {
+              const feed = await parser.parseString(response.data);
+              return res.status(200).json(feed);
+            }
+          } catch (error: any) {
+            console.warn(`RSS attempt failed for ${username} at ${rssUrl} with ${ua}: ${error.message}`);
+          }
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+
+      return res.status(404).json({ 
+        error: "Profile not found or access denied", 
+        suggestion: "Make sure the username is correct and the diary is public."
+      });
+    } catch (err: any) {
+      console.error("Fatal error in Letterboxd API:", err);
+      return res.status(500).json({ error: "Internal Server Error", details: err.message });
+    }
   });
 
   // Proxy for TMDB (to keep API key safe and avoid CORS)

@@ -1,107 +1,146 @@
 const entry = JSON.parse(sessionStorage.getItem('lb_selected') || '{}');
 const username = sessionStorage.getItem('lb_username') || 'STUDIO';
 
-// Elements
-const canvas = {
-    box: document.getElementById('export-box'),
-    poster: document.getElementById('cv-poster'),
-    posterLayer: document.getElementById('layer-poster'),
-    title: document.getElementById('cv-title'),
-    year: document.getElementById('cv-year'),
-    rating: document.getElementById('cv-rating'),
-    reviewBox: document.getElementById('cv-review-box'),
-    reviewText: document.getElementById('cv-review-text'),
-    user: document.getElementById('cv-user'),
-    layers: document.getElementById('layer-content')
-};
+const DYNAMIC_STYLE_ROOT = document.getElementById('export-box');
 
 const GRADIENTS = [
-    'radial-gradient(circle at top left, #1e1e3f 0%, #0d0f11 100%)',
-    'radial-gradient(circle at top left, #2d1b33 0%, #1c1421 100%)',
-    'radial-gradient(circle at top left, #1b2d1b 0%, #0f140f 100%)',
-    'linear-gradient(135deg, #14181c 0%, #242c34 100%)',
-    '#000000', '#14181c'
+    '#0b0c0e', // Dark charcoal/black
+    '#1c0f0a', // Warm burnt umber dark
+    '#0a141c', // Deep oceanic blue
+    '#0d140e', // Deep forest green
+    '#170b13', // Deep plum
+    'radial-gradient(circle at center, #1e1e3f 0%, #0b0c0e 100%)',
 ];
 
-const ACCENTS = ['#00e054', '#ff8000', '#00b1f1', '#ff4d4d', '#ffffff'];
+const ACCENTS = ['#ff8000', '#00e054', '#00b1f1', '#ff4d4d', '#ffffff', '#ffd700'];
 
 function init() {
-    renderCanvas();
+    populateData();
     renderControls();
     attachListeners();
+    // Default to template 01
+    document.querySelector('[data-tpl="tpl-01"]').click();
 }
 
-function renderCanvas() {
-    canvas.poster.src = entry.posterUrl;
-    canvas.title.innerText = entry.movieTitle;
-    canvas.year.innerText = entry.movieYear;
-    canvas.user.innerText = username;
-    canvas.rating.innerText = '★'.repeat(Math.max(0, Math.floor(entry.rating))) + (entry.rating % 1 !== 0 ? '½' : '');
+function setText(selector, text) {
+    document.querySelectorAll(selector).forEach(el => el.innerText = text);
+}
+
+function setImages(selector, src) {
+    document.querySelectorAll(selector).forEach(el => el.src = src);
+}
+
+function populateData() {
+    // Basic Mapping
+    setImages('.cv-poster', entry.posterUrl || '');
+    setText('.cv-title', entry.movieTitle || 'UNKNOWN');
+    setText('.cv-year', entry.movieYear || '');
+    setText('.cv-user', username.toUpperCase());
+    
+    // Rating Stars
+    const fullStars = Math.max(0, Math.floor(entry.rating || 0));
+    const halfStar = (entry.rating % 1 !== 0) ? '½' : '';
+    const ratingStr = '★'.repeat(fullStars) + halfStar;
+    setText('.cv-rating', ratingStr);
+    
+    // Review Content
+    const reviewSelectors = document.querySelectorAll('.cv-review-text');
+    const revContainers = document.querySelectorAll('.cv-rev-container');
     
     if (entry.content && entry.content.length > 5) {
-        canvas.reviewBox.classList.remove('hidden');
-        canvas.reviewText.innerText = entry.content.substring(0, 180) + (entry.content.length > 180 ? '...' : '');
+        reviewSelectors.forEach(el => {
+            el.innerText = `${entry.content.substring(0, 150)}${entry.content.length > 150 ? '...' : ''}`;
+        });
+        revContainers.forEach(el => el.classList.remove('hidden'));
+    } else {
+        // Fallback for no review
+        reviewSelectors.forEach(el => {
+            el.innerText = `Watched on Letterboxd.`;
+        });
     }
 }
 
 function renderControls() {
-    // Accents
+    // 1. Render Accents
     const accList = document.getElementById('accent-list');
     ACCENTS.forEach(c => {
         const b = document.createElement('button');
-        b.className = 'w-10 h-10 rounded-full border-2 border-white/5 hover:scale-110 transition-all';
+        b.className = 'w-8 h-8 rounded-full border border-white/10 hover:scale-110 active:scale-95 transition-all outline outline-0 outline-offset-2 hover:outline-white/20';
         b.style.backgroundColor = c;
-        b.onclick = () => { canvas.rating.style.color = c; };
+        b.onclick = () => {
+            DYNAMIC_STYLE_ROOT.style.setProperty('--accent-color', c);
+        };
         accList.appendChild(b);
     });
 
-    // Bgs
+    // 2. Render Backgrounds
     const bgList = document.getElementById('bg-list');
     GRADIENTS.forEach(g => {
         const b = document.createElement('button');
-        b.className = 'w-full aspect-square rounded-xl border border-white/5 hover:scale-110 transition-all';
+        b.className = 'w-10 h-10 w-full basis-[30%] grow aspect-video rounded-md border border-white/5 hover:border-white/30 transition-all';
         b.style.background = g;
-        b.onclick = () => { canvas.box.style.background = g; };
+        b.onclick = () => {
+            if (g.includes('gradient')) {
+                DYNAMIC_STYLE_ROOT.style.background = g;
+                DYNAMIC_STYLE_ROOT.style.setProperty('--bg-color', 'transparent');
+            } else {
+                DYNAMIC_STYLE_ROOT.style.background = g;
+                DYNAMIC_STYLE_ROOT.style.setProperty('--bg-color', g);
+            }
+        };
         bgList.appendChild(b);
     });
 }
 
 function attachListeners() {
-    // Download
-    document.getElementById('btn-download').onclick = async () => {
-        const btn = document.getElementById('btn-download');
-        btn.disabled = true;
-        try {
-            const dataUrl = await htmlToImage.toPng(canvas.box, { pixelRatio: 2, cacheBust: true });
-            const link = document.createElement('a');
-            link.download = `buddy-${entry.movieTitle}.png`;
-            link.href = dataUrl;
-            link.click();
-        } finally {
-            btn.disabled = false;
-        }
-    };
-
-    // Template Switch
+    // Template Switch Logic
     document.querySelectorAll('.tpl-btn').forEach(btn => {
         btn.onclick = () => {
-            document.querySelectorAll('.tpl-btn').forEach(b => b.classList.remove('active', 'border-[#00e054]/50', 'bg-[#00e054]/5', 'opacity-100'));
-            document.querySelectorAll('.tpl-btn').forEach(b => b.classList.add('opacity-50'));
-            
-            btn.classList.add('active', 'border-[#00e054]/50', 'bg-[#00e054]/5', 'opacity-100');
-            btn.classList.remove('opacity-50');
+            // Reset all buttons
+            document.querySelectorAll('.tpl-btn').forEach(b => {
+                b.classList.remove('active', 'border-accent', 'opacity-100');
+                b.classList.add('opacity-50', 'border-white/5');
+            });
+            // Activate clicked
+            btn.classList.add('active', 'border-accent', 'opacity-100');
+            btn.classList.remove('opacity-50', 'border-white/5');
 
-            if (btn.dataset.tpl === 'alt') {
-                canvas.layers.classList.add('items-center', 'text-center', 'justify-center');
-                canvas.layers.classList.remove('justify-end');
-                canvas.posterLayer.classList.add('opacity-30', 'blur-md', 'scale-110');
-            } else {
-                canvas.layers.classList.remove('items-center', 'text-center', 'justify-center');
-                canvas.layers.classList.add('justify-end');
-                canvas.posterLayer.classList.remove('opacity-30', 'blur-md', 'scale-110');
-            }
+            // Hide all templates
+            document.querySelectorAll('.tpl-layer').forEach(layer => {
+                layer.classList.add('hidden');
+            });
+            
+            // Show target template
+            const targetId = btn.getAttribute('data-tpl');
+            document.getElementById(targetId).classList.remove('hidden');
         };
     });
+
+    // Download / Export Image logic
+    document.getElementById('btn-download').onclick = async () => {
+        const btn = document.getElementById('btn-download');
+        const ogText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = 'RENDERING...';
+        
+        try {
+            const dataUrl = await htmlToImage.toPng(DYNAMIC_STYLE_ROOT, { 
+                pixelRatio: 3, // High Quality for IG 
+                cacheBust: true 
+            });
+            const link = document.createElement('a');
+            link.download = `buddy-${entry.movieTitle || 'export'}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch(err) {
+            console.error("Export failed:", err);
+            alert("Failed to render. Please try again.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = ogText;
+        }
+    };
 }
 
+// Start
 init();

@@ -20,15 +20,18 @@ document.getElementById('fetch-form').addEventListener('submit', async (e) => {
                 throw new Error(data.error || 'User not found or profile access denied');
             }
             
-            // Store data and username for the next page
             sessionStorage.setItem('lb_username', username);
             sessionStorage.setItem('lb_entries', JSON.stringify(data.items || []));
-            
-            // Redirect to gallery
             window.location.href = '/gallery.html';
         } else {
-            // Handle non-JSON response (likely HTML error from server)
-            throw new Error('SERVER RETURNED INVALID DATA. PLEASE TRY AGAIN LATER.');
+            const textContent = await response.text();
+            let errString = 'SERVER RETURNED INVALID DATA. ';
+            if (response.status === 504) errString += 'THE FETCH TIMED OUT.';
+            else if (response.status === 502) errString += 'BAD GATEWAY.';
+            else errString += 'STATUS: ' + response.status;
+            
+            console.error("Raw Response:", textContent);
+            throw new Error(errString);
         }
     } catch (err) {
         errorEl.innerText = err.message.toUpperCase();
