@@ -41,8 +41,8 @@ export default function App() {
     setIsLoading(true);
     setError(null);
     try {
-      const feed = await letterboxdService.getDiary(username);
-      setState(prev => ({ ...prev, username }));
+      const feed = await letterboxdService.getDiary(username.trim());
+      setState(prev => ({ ...prev, username: username.trim() }));
       const parsedEntries: DiaryEntry[] = feed.items.map((item: any) => {
         // Letterboxd titles are usually "Movie Name, Year - ★★★★"
         const titleParts = item.title.split(", ");
@@ -67,8 +67,10 @@ export default function App() {
       } else {
         setState((prev) => ({ ...prev, entries: parsedEntries }));
       }
-    } catch (err) {
-      setError("Could not find Letterboxd user. Make sure the profile is public.");
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.response?.data?.details || "Could not find Letterboxd user. Make sure the profile is public.";
+      setError(msg);
+      console.error("Diary Fetch Error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -223,8 +225,14 @@ export default function App() {
                     {(entry.rating || 0) % 1 !== 0 && "½"}
                   </div>
                 </div>
-                <div className="w-full h-full bg-[#1b2127] flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                  <Film className="w-12 h-12 text-gray-800" />
+                <div className="absolute inset-0 z-0">
+                  {entry.posterUrl ? (
+                     <img src={entry.posterUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" crossOrigin="anonymous" />
+                  ) : (
+                    <div className="w-full h-full bg-[#1b2127] flex items-center justify-center opacity-20">
+                      <Film className="w-12 h-12" />
+                    </div>
+                  )}
                 </div>
               </motion.button>
             ))}
@@ -235,19 +243,19 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen bg-[#14181c] text-white flex flex-col md:flex-row-reverse overflow-hidden">
-      {/* Sidebar - Controls */}
+    <div className="min-h-screen md:h-screen bg-[#14181c] text-white flex flex-col md:flex-row-reverse overflow-x-hidden md:overflow-hidden">
+      {/* Main Workspace - Canvas (Top on Mobile) */}
+      <main className="flex-1 overflow-auto bg-[#0d0f11] flex items-center justify-center p-4 md:p-12 order-1 md:order-2">
+        <Canvas state={state} />
+      </main>
+
+      {/* Sidebar - Controls (Bottom on Mobile) */}
       <Sidebar 
         state={state} 
         setState={setState} 
         onSelectEntry={handleSelectEntry}
         onBack={() => setState(prev => ({ ...prev, selectedEntry: null, entries: [] }))} 
       />
-
-      {/* Main Workspace - Canvas */}
-      <main className="flex-1 overflow-auto bg-[#0d0f11] flex items-center justify-center p-4 md:p-12">
-        <Canvas state={state} />
-      </main>
     </div>
   );
 }

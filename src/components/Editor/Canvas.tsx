@@ -1,6 +1,6 @@
-import { useRef, useEffect } from "react";
+import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
-import { Download, Film } from "lucide-react";
+import { Download, Film, Loader2 } from "lucide-react";
 import { EditorState } from "../../types";
 import { motion } from "motion/react";
 
@@ -10,11 +10,13 @@ interface CanvasProps {
 
 export const Canvas = ({ state }: CanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const entry = state.selectedEntry;
   const details = state.movieDetails;
 
   const downloadImage = async () => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || isDownloading) return;
+    setIsDownloading(true);
     try {
       // Step 1: Attempt high-quality capture with high pixel ratio
       const dataUrl = await toPng(canvasRef.current, { 
@@ -51,6 +53,8 @@ export const Canvas = ({ state }: CanvasProps) => {
         console.error("Critical download failure:", retryErr);
         alert("We encountered an issue generating your image. Try taking a screenshot or using Chrome for better results.");
       }
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -284,10 +288,11 @@ export const Canvas = ({ state }: CanvasProps) => {
 
       <button
         onClick={downloadImage}
-        className="flex items-center gap-2 bg-[#00e054] text-black font-bold py-4 px-10 rounded-2xl hover:bg-[#00c048] hover:scale-105 transition-all shadow-xl shadow-[#00e054]/20"
+        disabled={isDownloading}
+        className="flex items-center gap-2 bg-[#00e054] text-black font-bold py-4 px-10 rounded-2xl hover:bg-[#00c048] hover:scale-105 transition-all shadow-xl shadow-[#00e054]/20 disabled:opacity-50 disabled:cursor-not-allowed mb-8 md:mb-0"
       >
-        <Download className="w-5 h-5" />
-        Download Image
+        {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+        {isDownloading ? "Generating..." : "Download Image"}
       </button>
     </div>
   );

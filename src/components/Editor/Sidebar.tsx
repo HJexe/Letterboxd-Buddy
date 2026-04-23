@@ -74,8 +74,8 @@ export const Sidebar = ({ state, setState, onSelectEntry, onBack }: SidebarProps
   };
 
   return (
-    <aside className="w-full md:w-96 bg-[#1b2127] border-l border-[#303840] h-auto md:h-screen flex flex-col z-50 overflow-hidden shadow-2xl">
-      <div className="p-4 border-b border-[#303840] flex items-center justify-between bg-[#14181c]/50 backdrop-blur-md">
+    <aside className="w-full md:w-96 bg-[#1b2127] border-t md:border-t-0 md:border-l border-[#303840] h-auto md:h-screen flex flex-col z-50 order-2 md:order-1 shadow-2xl">
+      <div className="p-4 border-b border-[#303840] flex items-center justify-between bg-[#14181c]/50 backdrop-blur-md sticky top-0 z-10">
         <button 
           onClick={onBack}
           className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors"
@@ -100,7 +100,7 @@ export const Sidebar = ({ state, setState, onSelectEntry, onBack }: SidebarProps
                 onClick={() => setState((prev) => ({ ...prev, template: t }))}
                 className={`p-4 text-center rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all relative overflow-hidden group ${
                   state.template === t 
-                    ? "bg-[#00e054]/10 border-[#00e054] text-[#00e054]" 
+                    ? "bg-[#00e054] border-[#00e054] text-black shadow-[0_0_20px_rgba(0,224,84,0.2)]" 
                     : "bg-[#242c34] border-[#303840] text-gray-400 hover:border-gray-600"
                 }`}
               >
