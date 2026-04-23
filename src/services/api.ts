@@ -26,6 +26,7 @@ export const fanartService = {
 };
 
 export const extractRating = (contentSnippet: string) => {
+  if (!contentSnippet) return 0;
   const match = contentSnippet.match(/Rating: (★+½?)/);
   if (!match) return 0;
   const stars = match[1];
@@ -38,6 +39,7 @@ export const extractRating = (contentSnippet: string) => {
 };
 
 export const extractPosterFromRSS = (content: string) => {
+  if (!content) return null;
   const match = content.match(/src="([^"]+)"/);
   return match ? match[1] : null;
 };

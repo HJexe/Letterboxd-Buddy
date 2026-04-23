@@ -43,22 +43,28 @@ export default function App() {
     try {
       const feed = await letterboxdService.getDiary(username.trim());
       setState(prev => ({ ...prev, username: username.trim() }));
-      const parsedEntries: DiaryEntry[] = feed.items.map((item: any) => {
+      
+      const items = feed?.items || [];
+      const parsedEntries: DiaryEntry[] = items.map((item: any) => {
         // Letterboxd titles are usually "Movie Name, Year - ★★★★"
-        const titleParts = item.title.split(", ");
-        const movieTitle = titleParts[0];
+        const fullTitle = (item.title || "").toString();
+        const titleParts = fullTitle.split(", ");
+        const movieTitle = titleParts[0] || "Untitled Film";
         const yearMatch = titleParts[1]?.match(/\d{4}/);
         const movieYear = yearMatch ? yearMatch[0] : "";
         
+        const content = (item.content || "").toString();
+        const snippet = (item.contentSnippet || "").toString();
+
         return {
-          title: item.title,
-          link: item.link,
-          pubDate: item.pubDate,
-          content: item.content,
-          rating: extractRating(item.contentSnippet || item.content),
+          title: fullTitle,
+          link: item.link || "",
+          pubDate: item.pubDate || new Date().toISOString(),
+          content: content,
+          rating: extractRating(snippet || content),
           movieTitle,
           movieYear,
-          posterUrl: extractPosterFromRSS(item.content),
+          posterUrl: extractPosterFromRSS(content),
         };
       });
 

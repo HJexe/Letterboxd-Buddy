@@ -119,7 +119,7 @@ export const Canvas = ({ state }: CanvasProps) => {
 
                 {state.showReview && entry?.content && (
                   <div className="bg-black/20 backdrop-blur-md p-4 rounded-xl border border-white/10 text-sm leading-relaxed max-h-32 overflow-hidden italic font-light">
-                    "{entry.content.replace(/<[^>]*>/g, "").substring(0, 200)}..."
+                    "{(entry.content || "").toString().replace(/<[^>]*>/g, "").substring(0, 200)}..."
                   </div>
                 )}
               </div>
@@ -151,7 +151,7 @@ export const Canvas = ({ state }: CanvasProps) => {
                
                {state.showReview && entry?.content && (
                   <div className="max-w-xs mx-auto text-xs opacity-60 italic font-light leading-relaxed">
-                    "{entry.content.replace(/<[^>]*>/g, "").substring(0, 150)}..."
+                    "{(entry.content || "").toString().replace(/<[^>]*>/g, "").substring(0, 150)}..."
                   </div>
                )}
 
@@ -256,8 +256,8 @@ export const Canvas = ({ state }: CanvasProps) => {
                   <div>
                     <p className="text-[8px] font-bold opacity-30 uppercase tracking-widest mb-1">AVG RATING</p>
                     <p className="text-xl font-black tracking-tighter" style={{ color: state.accentColor }}>
-                      {((state.curatedEntries.length > 0 ? state.curatedEntries : state.entries).reduce((acc, curr) => acc + (curr.rating || 0), 0) / 
-                        Math.max((state.curatedEntries.length > 0 ? state.curatedEntries : state.entries).length, 1)).toFixed(1)}
+                      {((state.curatedEntries && state.curatedEntries.length > 0 ? state.curatedEntries : state.entries || []).reduce((acc: number, curr: any) => acc + (curr.rating || 0), 0) / 
+                        Math.max((state.curatedEntries && state.curatedEntries.length > 0 ? state.curatedEntries : state.entries || []).length, 1)).toFixed(1)}
                     </p>
                   </div>
                 </div>

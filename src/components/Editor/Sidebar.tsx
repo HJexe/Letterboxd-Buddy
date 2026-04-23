@@ -417,7 +417,7 @@ export const Sidebar = ({ state, setState, onSelectEntry, onBack }: SidebarProps
                 <textarea 
                   className="w-full h-48 bg-[#14181c] rounded-2xl p-6 text-sm text-white/90 border border-white/5 focus:ring-1 focus:ring-[#ff8000] outline-none transition-all placeholder:text-white/10 italic leading-relaxed"
                   placeholder="Share your thoughts on the film..."
-                  value={state.selectedEntry?.content || ""}
+                  value={(state.selectedEntry?.content || "").toString()}
                   onChange={(e) => {
                     const newEntry = state.selectedEntry ? { ...state.selectedEntry, content: e.target.value } : null;
                     setState(prev => ({ ...prev, selectedEntry: newEntry }));
