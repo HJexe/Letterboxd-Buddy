@@ -1,0 +1,6 @@
+{
+  "name": "Letterboxd Buddy",
+  "description": "Transform your Letterboxd diary entries into cinematic, socially optimized graphics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["Real-time data fetching", "Image processing", "Social media export"]
+}
