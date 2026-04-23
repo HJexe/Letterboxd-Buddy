@@ -1,5 +1,6 @@
 let entry = JSON.parse(sessionStorage.getItem('lb_selected') || 'null');
-const entriesRaw = JSON.parse(sessionStorage.getItem('lb_entries') || '[]');
+const RAW_CACHE = JSON.parse(sessionStorage.getItem('lb_entries') || '[]');
+const entriesRaw = Array.isArray(RAW_CACHE) ? RAW_CACHE : [];
 const username = sessionStorage.getItem('lb_username') || 'STUDIO';
 
 // State for custom poster cycling via Fanart TV
@@ -66,8 +67,19 @@ const ACCENTS = [
 ];
 
 async function init() {
-    renderFilmStrip();
-    await populateData();
+    if (!entry && entriesRaw.length > 0) {
+        entry = parseRawItem(entriesRaw[0]);
+    } else if (!entry) {
+        entry = {}; // Fallback empty
+    }
+
+    try {
+        renderFilmStrip();
+        await populateData();
+    } catch (e) {
+        console.error("Init population error:", e);
+    }
+    
     renderControls();
     attachListeners();
 }
@@ -87,7 +99,8 @@ function renderFilmStrip() {
         let posterUrl = imgMatch ? imgMatch[1] : "";
 
         const div = document.createElement('div');
-        div.className = `flex-none w-14 h-20 rounded-md overflow-hidden cursor-pointer border-2 transition-all hover:scale-105 ${entry.movieTitle === movieTitle ? 'border-accent shadow-[0_0_15px_var(--accent-color)]' : 'border-white/10 opacity-50 hover:opacity-100'}`;
+        const isActive = entry && entry.movieTitle === movieTitle;
+        div.className = `flex-none w-14 h-20 rounded-md overflow-hidden cursor-pointer border-2 transition-all hover:scale-105 ${isActive ? 'border-accent shadow-[0_0_15px_var(--accent-color)]' : 'border-white/10 opacity-50 hover:opacity-100'}`;
         div.innerHTML = `<img src="${posterUrl}" class="w-full h-full object-cover">`;
         
         div.onclick = async () => {
@@ -231,33 +244,37 @@ function renderMonthlyTemplate() {
 }
 
 async function populateData() {
+    if (!entry) return; // Immediate bailout if totally invalid
+    
     setText('.cv-title', entry.movieTitle || 'UNKNOWN');
     setText('.cv-year', entry.movieYear ? `— ${entry.movieYear} —` : ''); // Styled like mockup
     setText('.cv-user', username.toUpperCase());
     
     let finalPoster = entry.posterUrl || '';
-    try {
-        const res = await fetch(`/api/tmdb/search?query=${encodeURIComponent(entry.movieTitle)}`);
-        const data = await res.json();
-        if (data && data.results && data.results.length > 0) {
-            let match = data.results[0];
-            if (entry.movieYear) {
-                const yearMatch = data.results.find(r => r.release_date && r.release_date.startsWith(entry.movieYear));
-                if (yearMatch) match = yearMatch;
-            }
-            
-            // Capture for alt posters
-            currentTmdbId = match.id;
-            alternatePosters = [];
-            altPosterIndex = 0;
+    if (entry.movieTitle) {
+        try {
+            const res = await fetch(`/api/tmdb/search?query=${encodeURIComponent(entry.movieTitle)}`);
+            const data = await res.json();
+            if (data && data.results && data.results.length > 0) {
+                let match = data.results[0];
+                if (entry.movieYear) {
+                    const yearMatch = data.results.find(r => r.release_date && r.release_date.startsWith(entry.movieYear));
+                    if (yearMatch) match = yearMatch;
+                }
+                
+                // Capture for alt posters
+                currentTmdbId = match.id;
+                alternatePosters = [];
+                altPosterIndex = 0;
 
-            if (match.poster_path) {
-                finalPoster = `https://image.tmdb.org/t/p/w780${match.poster_path}`;
-                alternatePosters.push(finalPoster);
+                if (match.poster_path) {
+                    finalPoster = `https://image.tmdb.org/t/p/w780${match.poster_path}`;
+                    alternatePosters.push(finalPoster);
+                }
             }
+        } catch (e) {
+            console.warn("TMDB fetch failed, using fallback RSS poster.");
         }
-    } catch (e) {
-        console.warn("TMDB fetch failed, using fallback RSS poster.");
     }
 
     if (finalPoster) {
@@ -383,23 +400,26 @@ function attachListeners() {
 
     // Review Toggle (Eye Icon) Logic
     let showingReview = true;
-    document.getElementById('toggle-review').onclick = () => {
-        showingReview = !showingReview;
-        const box = document.getElementById('eye-icon-box');
-        const icon = box.querySelector('i');
-        const revContainers = document.querySelectorAll('.cv-rev-container, .cv-review-text');
-        
-        if (showingReview) {
-            box.className = 'w-6 h-6 rounded-md bg-accent/20 flex items-center justify-center border border-accent/30 text-accent transition-colors';
-            icon.setAttribute('data-lucide', 'eye');
-            revContainers.forEach(el => el.classList.remove('!hidden'));
-        } else {
-            box.className = 'w-6 h-6 rounded-md bg-white/5 flex items-center justify-center border border-white/10 text-white/50 transition-colors';
-            icon.setAttribute('data-lucide', 'eye-off');
-            revContainers.forEach(el => el.classList.add('!hidden'));
-        }
-        lucide.createIcons();
-    };
+    const toggleBtn = document.getElementById('toggle-review');
+    if (toggleBtn) {
+        toggleBtn.onclick = () => {
+            showingReview = !showingReview;
+            const box = document.getElementById('eye-icon-box');
+            const icon = box.querySelector('i');
+            const revContainers = document.querySelectorAll('.cv-rev-container, .cv-review-text');
+            
+            if (showingReview) {
+                box.className = 'w-6 h-6 rounded-md bg-accent/20 flex items-center justify-center border border-accent/30 text-accent transition-colors';
+                icon.setAttribute('data-lucide', 'eye');
+                revContainers.forEach(el => el.classList.remove('!hidden'));
+            } else {
+                box.className = 'w-6 h-6 rounded-md bg-white/5 flex items-center justify-center border border-white/10 text-white/50 transition-colors';
+                icon.setAttribute('data-lucide', 'eye-off');
+                revContainers.forEach(el => el.classList.add('!hidden'));
+            }
+            lucide.createIcons();
+        };
+    }
 
     // Alternate Poster Logic (Fanart.tv)
     const btnAltPoster = document.getElementById('btn-alt-poster');
@@ -452,38 +472,41 @@ function attachListeners() {
     }
 
     // Download Logic via html2canvas
-    document.getElementById('btn-download').onclick = async () => {
-        const btn = document.getElementById('btn-download');
-        const ogText = btn.innerHTML;
-        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> RENDERING...';
-        lucide.createIcons();
-        btn.disabled = true;
-        
-        try {
-            const canvas = await window.html2canvas(DYNAMIC_STYLE_ROOT, {
-                scale: 3,
-                useCORS: true,
-                allowTaint: false,
-                backgroundColor: null,
-                logging: false,
-                onclone: (clonedDoc) => {
-                    // Optional fixes in cloned doc if needed
-                }
-            });
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-            const link = document.createElement('a');
-            link.download = `buddy-${entry.movieTitle || 'export'}.jpg`;
-            link.href = dataUrl;
-            link.click();
-        } catch(err) {
-            console.error("Export failed:", err);
-            alert("Failed to render. Please try again or check console.");
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = ogText;
+    const btnDownload = document.getElementById('btn-download');
+    if (btnDownload) {
+        btnDownload.onclick = async () => {
+            const btn = document.getElementById('btn-download');
+            const ogText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> RENDERING...';
             lucide.createIcons();
-        }
-    };
+            btn.disabled = true;
+            
+            try {
+                const canvas = await window.html2canvas(DYNAMIC_STYLE_ROOT, {
+                    scale: 3,
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor: null,
+                    logging: false,
+                    onclone: (clonedDoc) => {
+                        // Optional fixes in cloned doc if needed
+                    }
+                });
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+                const link = document.createElement('a');
+                link.download = `buddy-${entry.movieTitle || 'export'}.jpg`;
+                link.href = dataUrl;
+                link.click();
+            } catch(err) {
+                console.error("Export failed:", err);
+                alert("Failed to render. Please try again or check console.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = ogText;
+                lucide.createIcons();
+            }
+        };
+    }
 }
 
 init();

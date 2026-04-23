@@ -9,7 +9,15 @@ window.addEventListener('pageshow', (e) => {
 
 document.getElementById('fetch-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const username = document.getElementById('username').value.trim();
+    let username = document.getElementById('username').value.trim();
+    
+    // Strip "@" if users copy-paste their handles directly
+    if (username.startsWith('@')) {
+        username = username.substring(1);
+    }
+    // Remove any accidental parameters/paths from quick copy pastas
+    username = username.split('/')[0].split('?')[0];
+
     const btn = document.getElementById('submit-btn');
     const errorEl = document.getElementById('error-msg');
 

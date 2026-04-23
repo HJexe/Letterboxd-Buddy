@@ -16,7 +16,10 @@ app.use(express.json());
 // Proxy for Letterboxd RSS with hardened headers to avoid blocking
 app.get("/api/letterboxd/:username", async (req, res) => {
     try {
-      const { username } = req.params;
+      let { username } = req.params;
+      
+      // Clean username aggressively
+      username = username.trim().replace(/^@+/, '').split('/')[0].split('?')[0];
       
       // Test both common URL variants
       const urls = [
