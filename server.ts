@@ -19,40 +19,50 @@ async function startServer() {
   // Proxy for Letterboxd RSS with hardened headers to avoid blocking
   app.get("/api/letterboxd/:username", async (req, res) => {
     const { username } = req.params;
-    const rssUrl = `https://letterboxd.com/${username}/rss/`;
     
-    // List of UA to try in sequence
-    const userAgents = [
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Letterboxd/3.0 (iPhone; iOS 17.0; Scale/3.00)',
-      'RSS-Parser/3.13.0',
+    // Test both common URL variants
+    const urls = [
+      `https://letterboxd.com/${username}/rss/`,
+      `https://${username}.letterboxd.com/rss/`
     ];
 
-    for (const [idx, ua] of userAgents.entries()) {
-      try {
-        const response = await axios.get(rssUrl, {
-          headers: {
-            'User-Agent': ua,
-            'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-          },
-          timeout: 8000,
-        });
-        
-        const feed = await parser.parseString(response.data);
-        return res.json(feed);
-      } catch (error: any) {
-        console.warn(`RSS attempt ${idx + 1} failed for ${username}: ${error.message}`);
-        if (idx === userAgents.length - 1) {
-           return res.status(error.response?.status || 500).json({ 
-             error: "Profile not found or access denied", 
-             details: error.message,
-             suggestion: "Make sure the username is correct and the diary is public."
-           });
+    for (const rssUrl of urls) {
+      // List of UA to try in sequence
+      const userAgents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Letterboxd/3.0 (iPhone; iOS 17.0; Scale/3.00)',
+        'RSS-Parser/3.13.0',
+      ];
+
+      for (const [idx, ua] of userAgents.entries()) {
+        try {
+          const response = await axios.get(rssUrl, {
+            headers: {
+              'User-Agent': ua,
+              'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+              'Referer': 'https://letterboxd.com/',
+              'Origin': 'https://letterboxd.com',
+            },
+            timeout: 10000,
+          });
+          
+          if (response.data && response.data.includes('letterboxd.com')) {
+            const feed = await parser.parseString(response.data);
+            return res.json(feed);
+          }
+        } catch (error: any) {
+          console.warn(`RSS attempt failed for ${username} at ${rssUrl}: ${error.message}`);
         }
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
+
+    return res.status(500).json({ 
+      error: "Profile not found or access denied", 
+      suggestion: "Make sure the username is correct and the diary is public."
+    });
   });
 
   // Proxy for TMDB (to keep API key safe and avoid CORS)

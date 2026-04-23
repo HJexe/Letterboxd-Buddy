@@ -12,9 +12,13 @@ document.getElementById('fetch-form').addEventListener('submit', async (e) => {
 
     try {
         const response = await fetch(`/api/letterboxd/${username}`);
-        if (!response.ok) throw new Error('User not found or profile access denied');
+        const data = await response.json();
         
-        const feed = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'User not found or profile access denied');
+        }
+        
+        const feed = data;
         
         // Store data and username for the next page
         sessionStorage.setItem('lb_username', username);
