@@ -9,15 +9,12 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const parser = new Parser();
+const app = express();
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+app.use(express.json());
 
-  app.use(express.json());
-
-  // Proxy for Letterboxd RSS with hardened headers to avoid blocking
-  app.get("/api/letterboxd/:username", async (req, res) => {
+// Proxy for Letterboxd RSS with hardened headers to avoid blocking
+app.get("/api/letterboxd/:username", async (req, res) => {
     try {
       const { username } = req.params;
       
@@ -150,11 +147,11 @@ async function startServer() {
   // Fallback for .html extensions
   app.use(express.static(publicPath, { extensions: ['html'] }));
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
+  if (!process.env.VERCEL) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
 
-startServer().catch((err) => {
-  console.error("Error starting server:", err);
-});
+  export default app;
