@@ -1,3 +1,12 @@
+window.addEventListener('pageshow', (e) => {
+    // Reset state if coming from bfcache (back button)
+    const btn = document.getElementById('submit-btn');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerText = 'FETCH';
+    }
+});
+
 document.getElementById('fetch-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value.trim();
@@ -22,7 +31,8 @@ document.getElementById('fetch-form').addEventListener('submit', async (e) => {
             
             sessionStorage.setItem('lb_username', username);
             sessionStorage.setItem('lb_entries', JSON.stringify(data.items || []));
-            window.location.href = '/gallery.html';
+            sessionStorage.removeItem('lb_selected'); // Clear any previous selection to force new auto-select
+            window.location.href = '/editor.html';
         } else {
             const textContent = await response.text();
             let errString = 'SERVER RETURNED INVALID DATA. ';
