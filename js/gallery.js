@@ -69,32 +69,14 @@ async function renderGallery() {
         }
 
         const imgMatch = content.match(/<img src="(.*?)"/);
-        let posterUrl = imgMatch ? imgMatch[1] : "";
-
-        // Attempt high-res proxy tmdb fetch
-        try {
-            const res = await fetch(`/api/tmdb/search?query=${encodeURIComponent(movieTitle)}`);
-            const data = await res.json();
-            if (data && data.results && data.results.length > 0) {
-                let match = data.results[0];
-                if (movieYear) {
-                    const ym = data.results.find((r) => r.release_date && r.release_date.startsWith(movieYear));
-                    if (ym) match = ym;
-                }
-                if (match.poster_path) {
-                    posterUrl = `https://image.tmdb.org/t/p/w500${match.poster_path}`;
-                }
-            }
-        } catch(e) {
-            console.warn("Failed tmdb fetch for gallery item");
-        }
+        let fallbackPoster = imgMatch ? imgMatch[1] : "";
 
         // Like/Heart status
-        const isHearted = content.includes(" Watched on "); // Basic heuristic, RSS doesn't directly expose hearts well, but we can assume popular reviews get hearts, or just fake it for UI demo. Actually wait, RSS fullTitle contains " - ★★★★" or something. Let's just randomly set it or check if rating is 5.
+        const isHearted = content.includes(" Watched on ");
         const heartHTML = rating >= 4 ? `<span class="text-white ml-0.5 mt-[1px]">♥</span>` : '';
 
         const entryData = {
-            movieTitle, movieYear, rating, posterUrl, content: content.replace(/<[^>]*>/g, '').trim(), pubDate: item.pubDate
+            movieTitle, movieYear, rating, posterUrl: fallbackPoster, content: content.replace(/<[^>]*>/g, '').trim(), pubDate: item.pubDate
         };
 
         const card = document.createElement('div');
@@ -108,20 +90,41 @@ async function renderGallery() {
         const halfStar = (rating % 1 !== 0) ? '½' : '';
         const ratingStr = '★'.repeat(fullStars) + halfStar;
 
+        // Render card immediately with fallback poster
         card.innerHTML = `
-            <div class="aspect-[2/3] w-full rounded-md overflow-hidden bg-white/5 border border-white/10 shadow-lg group-hover:border-white/40 transition-colors">
-                <img src="/api/proxy-image?url=${encodeURIComponent(posterUrl)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" crossorigin="anonymous">
+            <div class="aspect-[2/3] w-full rounded-md overflow-hidden bg-white/5 border border-white/10 shadow-lg group-hover:border-white/40 transition-colors relative">
+                <img src="${fallbackPoster}" class="poster-img w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" crossorigin="anonymous">
             </div>
             <div class="flex justify-between items-center px-0.5">
                 <div class="flex text-[10px] text-white/90">
                     <span>${ratingStr}</span>
                     ${heartHTML}
                 </div>
-                <span class="text-[9px] font-bold text-white/50">${22 - i}</span>
+                <span class="text-[9px] font-bold text-white/50">${entriesRaw.length - i}</span>
             </div>
         `;
 
         grid.appendChild(card);
+
+        // Lazily fetch high-res TMDB poster in the background
+        fetch(`/api/tmdb/search?query=${encodeURIComponent(movieTitle)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.results && data.results.length > 0) {
+                    let match = data.results[0];
+                    if (movieYear) {
+                        const ym = data.results.find((r) => r.release_date && r.release_date.startsWith(movieYear));
+                        if (ym) match = ym;
+                    }
+                    if (match.poster_path) {
+                        const highResUrl = `https://image.tmdb.org/t/p/w500${match.poster_path}`;
+                        entryData.posterUrl = highResUrl; // update data for the editor
+                        const imgEl = card.querySelector('.poster-img');
+                        if (imgEl) imgEl.src = `/api/proxy-image?url=${encodeURIComponent(highResUrl)}`;
+                    }
+                }
+            })
+            .catch(e => console.warn("Background TMDB fetch failed for", movieTitle));
     }
 }
 
