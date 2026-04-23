@@ -148,11 +148,15 @@ function renderMonthlyTemplate() {
                     if (match?.poster_path) {
                         const highResUrl = `https://image.tmdb.org/t/p/w300${match.poster_path}`;
                         const imgEl = cell.querySelector('img');
-                        // No blob needed here since it's typically fine for internal rendering, but let's use it for export safety!
+                        // Absolute CORS/Taint fix for html-to-image loop iteration
                         fetch(`/api/proxy-image?url=${encodeURIComponent(highResUrl)}`)
                             .then(r => r.blob())
                             .then(blob => {
-                                if (imgEl) imgEl.src = URL.createObjectURL(blob);
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                    if (imgEl) imgEl.src = reader.result;
+                                };
+                                reader.readAsDataURL(blob);
                             }).catch(() => {});
                     }
                 }
@@ -198,15 +202,19 @@ async function populateData() {
     }
 
     if (finalPoster) {
-        const fetchUrl = finalPoster.includes('tmdb.org') ? finalPoster : `/api/proxy-image?url=${encodeURIComponent(finalPoster)}`;
+        // ALWAYS route via proxy, and encode to Base64 to bypass strict html-to-image origin rules
+        const fetchUrl = `/api/proxy-image?url=${encodeURIComponent(finalPoster)}`;
         try {
-            // Direct blob translation prevents ANY export-taint from html2canvas/html-to-image
             const imgRes = await fetch(fetchUrl);
             const blob = await imgRes.blob();
-            setImages('.cv-poster', URL.createObjectURL(blob));
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImages('.cv-poster', reader.result);
+            };
+            reader.readAsDataURL(blob);
         } catch (err) {
-            console.warn("Blob conversion failed, using raw src:", err);
-            setImages('.cv-poster', fetchUrl);
+            console.warn("Base64 conversion failed, using raw src backup:", err);
+            setImages('.cv-poster', finalPoster);
         }
     }
     
@@ -337,7 +345,7 @@ function attachListeners() {
         };
     }
 
-    // Download Logic via html-to-image
+    // Download Logic via html2canvas
     document.getElementById('btn-download').onclick = async () => {
         const btn = document.getElementById('btn-download');
         const ogText = btn.innerHTML;
@@ -346,13 +354,19 @@ function attachListeners() {
         btn.disabled = true;
         
         try {
-            const dataUrl = await htmlToImage.toPng(DYNAMIC_STYLE_ROOT, { 
-                pixelRatio: 3,
-                style: { transform: 'scale(1)', margin: '0' },
-                cacheBust: true
+            const canvas = await window.html2canvas(DYNAMIC_STYLE_ROOT, {
+                scale: 3,
+                useCORS: true,
+                allowTaint: false,
+                backgroundColor: null,
+                logging: false,
+                onclone: (clonedDoc) => {
+                    // Optional fixes in cloned doc if needed
+                }
             });
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
             const link = document.createElement('a');
-            link.download = `buddy-${entry.movieTitle || 'export'}.png`;
+            link.download = `buddy-${entry.movieTitle || 'export'}.jpg`;
             link.href = dataUrl;
             link.click();
         } catch(err) {
