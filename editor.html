@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letterboxd Buddy | Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .canvas-bg { background: radial-gradient(circle at top left, #1e1e3f 0%, #0d0f11 100%); }
+    </style>
+</head>
+<body class="bg-[#0d0f11] text-white flex flex-col md:flex-row-reverse h-screen overflow-hidden">
+    <!-- 1. CANVAS AREA -->
+    <main class="flex-1 overflow-auto flex items-center justify-center p-6 md:p-12 relative bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+        <div id="export-box" class="w-full max-w-[400px] aspect-[9/16] bg-[#14181c] rounded-3xl overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] relative transition-all duration-500 canvas-bg">
+            <!-- Layers -->
+            <div id="layer-poster" class="absolute inset-0 transition-all duration-700">
+                <img id="cv-poster" src="" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
+            </div>
+
+            <div id="layer-content" class="absolute inset-0 p-8 flex flex-col justify-end space-y-6 pointer-events-none">
+                <div class="space-y-2">
+                    <h2 id="cv-title" class="text-4xl md:text-5xl font-black italic uppercase italic tracking-tighter leading-[0.85]"></h2>
+                    <p id="cv-year" class="text-lg font-bold opacity-60 italic"></p>
+                </div>
+                <div id="cv-rating" class="flex text-4xl text-[#00e054] tracking-tight"></div>
+                <div id="cv-review-box" class="hidden bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10 italic text-sm leading-relaxed font-light shadow-2xl">
+                    "<span id="cv-review-text"></span>"
+                </div>
+            </div>
+
+            <!-- Branding -->
+            <div class="absolute top-8 left-8 flex items-center space-x-3 opacity-60">
+                <div class="flex space-x-1">
+                    <div class="w-2 h-2 rounded-full bg-[#ff8000]"></div>
+                    <div class="w-2 h-2 rounded-full bg-[#00e054]"></div>
+                </div>
+                <span id="cv-user" class="text-[9px] font-black uppercase tracking-[0.3em]"></span>
+            </div>
+        </div>
+
+        <!-- Global UI -->
+        <div class="absolute top-8 right-8 flex space-x-3 z-[100]">
+            <button id="btn-download" class="p-4 bg-[#00e054] text-black rounded-full hover:scale-110 active:scale-95 transition-all shadow-2xl shadow-[#00e054]/20 group">
+                <i data-lucide="download" class="w-6 h-6"></i>
+            </button>
+            <a href="/gallery.html" class="p-4 bg-white/5 backdrop-blur-xl text-white rounded-full border border-white/10 hover:bg-white/10 transition-all">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </a>
+        </div>
+    </main>
+
+    <!-- 2. SIDEBAR CONTROLS -->
+    <aside class="w-full md:w-[380px] bg-[#14181c] border-t md:border-t-0 md:border-r border-white/5 flex flex-col shadow-2xl z-50">
+        <header class="p-6 border-b border-white/5 flex items-center justify-between bg-[#1b2127]">
+            <h3 class="font-black italic uppercase tracking-tighter text-lg text-[#00e054]">Design Studio</h3>
+            <div class="flex space-x-1">
+                <div class="w-2 h-2 rounded-full bg-[#00e054] animate-pulse"></div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-auto p-8 space-y-12 bg-[#14181c]">
+            <!-- Templates -->
+            <section class="space-y-5">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600">Cinematic Template</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="tpl-btn glass p-6 rounded-2xl border-white/5 transition-all text-center group active border-[#00e054]/50 bg-[#00e054]/5" data-tpl="full">
+                        <div class="w-full aspect-[2/3] bg-gradient-to-br from-[#00e054]/20 to-transparent rounded-lg mb-3 border border-white/5"></div>
+                        <span class="text-[9px] font-black uppercase tracking-widest text-[#00e054]">Full Bleed</span>
+                    </button>
+                    <button class="tpl-btn glass p-6 rounded-2xl border-white/5 transition-all text-center group opacity-50" data-tpl="alt">
+                        <div class="w-full aspect-[2/3] bg-gradient-to-br from-[#ff8000]/20 to-transparent rounded-lg mb-3 border border-white/5"></div>
+                        <span class="text-[9px] font-black uppercase tracking-widest">Minimal</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Accents -->
+            <section class="space-y-5">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600">Color Palette</h4>
+                <div class="flex flex-wrap gap-4" id="accent-list">
+                    <!-- Dynamic -->
+                </div>
+            </section>
+
+            <!-- Atmospheres -->
+            <section class="space-y-5">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600">Atmosphere</h4>
+                <div class="grid grid-cols-4 gap-3" id="bg-list">
+                    <!-- Dynamic -->
+                </div>
+            </section>
+        </div>
+
+        <footer class="p-6 bg-black/40 border-t border-white/5">
+            <div class="text-[8px] font-black uppercase tracking-[0.5em] text-gray-600 text-center">Engine: Vanilla v2.0</div>
+        </footer>
+    </aside>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <script type="module" src="/js/editor.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

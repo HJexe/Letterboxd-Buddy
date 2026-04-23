@@ -1,16 +1,67 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Letterboxd Buddy</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;700;900&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet" crossorigin="anonymous">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letterboxd Buddy | Landing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-[#14181c] text-white overflow-hidden">
+    <!-- Hero Section -->
+    <main class="min-h-screen flex flex-col items-center justify-center p-6 bg-[radial-gradient(circle_at_top,_#1d232a,_#14181c)] animate-in">
+        <div class="w-full max-w-md space-y-12 text-center">
+            <!-- Branding -->
+            <div class="space-y-4">
+                <div class="flex justify-center space-x-1">
+                    <div class="w-12 h-12 rounded-full bg-[#ff8000] shadow-[0_0_20px_rgba(255,128,0,0.3)]"></div>
+                    <div class="w-12 h-12 rounded-full bg-[#00e054] shadow-[0_0_20px_rgba(0,224,84,0.3)]"></div>
+                    <div class="w-12 h-12 rounded-full bg-[#00b1f1] shadow-[0_0_20px_rgba(0,177,241,0.3)]"></div>
+                </div>
+                <div>
+                    <h1 class="text-6xl font-black italic tracking-tighter uppercase drop-shadow-2xl font-display">Buddy.</h1>
+                    <p class="text-gray-500 text-xs font-black uppercase tracking-[0.5em] mt-2">The Cinematic Diary Designer</p>
+                </div>
+            </div>
 
+            <!-- Fetch UI -->
+            <div class="space-y-4">
+                <form id="fetch-form" class="relative group">
+                    <input 
+                        type="text" 
+                        id="username" 
+                        placeholder="Letterboxd Username" 
+                        class="w-full bg-[#242c34] border border-[#303840] rounded-3xl py-6 px-8 pl-14 focus:outline-none focus:ring-2 focus:ring-[#00e054] transition-all group-hover:border-[#444c54] text-lg font-bold placeholder:text-gray-600"
+                        required
+                    >
+                    <svg class="absolute left-6 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 group-hover:text-[#00e054] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <button 
+                        type="submit" 
+                        id="submit-btn"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 bg-[#00e054] text-black font-black py-3 px-8 rounded-2xl hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-widest shadow-xl shadow-[#00e054]/20"
+                    >
+                        Fetch
+                    </button>
+                </form>
+                <div id="error-msg" class="hidden text-red-400 text-[10px] font-black uppercase tracking-widest bg-red-400/5 py-3 rounded-xl border border-red-400/10"></div>
+            </div>
+
+            <!-- Features -->
+            <div class="grid grid-cols-2 gap-4 pt-10">
+                <div class="p-6 bg-white/5 rounded-3xl border border-white/5 text-left space-y-2">
+                    <div class="text-[#00b1f1] font-black text-xl italic tracking-tighter">01</div>
+                    <h3 class="text-xs font-black uppercase tracking-widest">Story Templates</h3>
+                    <p class="text-[10px] text-gray-500 font-medium uppercase leading-relaxed">Perfectly sized cinematic layouts for Instagram & TikTok.</p>
+                </div>
+                <div class="p-6 bg-white/5 rounded-3xl border border-white/5 text-left space-y-2">
+                    <div class="text-[#ff8000] font-black text-xl italic tracking-tighter">02</div>
+                    <h3 class="text-xs font-black uppercase tracking-widest">Monthly Grids</h3>
+                    <p class="text-[10px] text-gray-500 font-medium uppercase leading-relaxed">Auto-generate 3x3 posters of your month in cinema.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="/js/index.js"></script>
+</body>
+</html>

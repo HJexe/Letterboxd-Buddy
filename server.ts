@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import fs from "fs";
 import axios from "axios";
 import Parser from "rss-parser";
 import dotenv from "dotenv";
@@ -119,21 +120,18 @@ async function startServer() {
     }
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    // In production, we serve from dist
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
+  // Static file serving for MPA
+  const publicPath = process.cwd();
+  app.use('/js', express.static(path.join(publicPath, 'js')));
+  app.use('/css', express.static(path.join(publicPath, 'css')));
+
+  // Specific routes for Pages
+  app.get('/', (req, res) => res.sendFile(path.join(publicPath, 'index.html')));
+  app.get('/gallery', (req, res) => res.sendFile(path.join(publicPath, 'gallery.html')));
+  app.get('/editor', (req, res) => res.sendFile(path.join(publicPath, 'editor.html')));
+
+  // Fallback for .html extensions
+  app.use(express.static(publicPath, { extensions: ['html'] }));
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
