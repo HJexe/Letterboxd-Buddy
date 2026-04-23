@@ -69,6 +69,29 @@ app.get("/api/letterboxd/:username", async (req, res) => {
     }
   });
 
+  // Image proxy to bypass CORS for html-to-image rendering
+  app.get("/api/proxy-image", async (req, res) => {
+    const { url } = req.query;
+    if (!url || typeof url !== 'string') return res.status(400).send("Missing URL");
+    try {
+      const response = await axios.get(url, { 
+        responseType: 'arraybuffer',
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'Accept': 'image/webp,image/png,image/jpeg,*/*'
+        },
+        timeout: 8000
+      });
+      res.set('Content-Type', response.headers['content-type'] || 'image/jpeg');
+      res.set('Cache-Control', 'public, max-age=86400');
+      res.set('Access-Control-Allow-Origin', '*'); 
+      res.send(response.data);
+    } catch (error) {
+      console.error("Proxy failed for:", url);
+      res.status(500).send("Proxy failed");
+    }
+  });
+
   // Proxy for TMDB (to keep API key safe and avoid CORS)
   app.get("/api/tmdb/search", async (req, res) => {
     const { query } = req.query;

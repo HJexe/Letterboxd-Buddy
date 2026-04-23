@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Letterboxd Buddy | Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-accent { color: var(--accent-color, #ff8000); }
+            .border-accent { border-color: var(--accent-color, #ff8000); }
+            .bg-accent { background-color: var(--accent-color, #ff8000); }
+            .bg-bg { background-color: var(--bg-color, #0b0c0e); }
+        }
+    </style>
     <link rel="stylesheet" href="/css/styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -56,6 +64,19 @@
                 <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Custom Backdrop</h4>
                 <div class="flex flex-wrap gap-3" id="bg-list">
                     <!-- Dynamic from JS -->
+                </div>
+            </section>
+
+            <!-- Review Option Toggle -->
+            <section class="space-y-4">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">Review Style</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="rev-btn glass p-3 text-center rounded-xl transition-all border-accent active opacity-100" data-rev="bubble">
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-gray-300">Bubble</span>
+                    </button>
+                    <button class="rev-btn glass p-3 text-center rounded-xl transition-all border-white/5 opacity-50 hover:opacity-100" data-rev="none">
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-gray-300">None</span>
+                    </button>
                 </div>
             </section>
         </div>

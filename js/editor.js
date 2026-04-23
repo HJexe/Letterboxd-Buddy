@@ -4,18 +4,27 @@ const username = sessionStorage.getItem('lb_username') || 'STUDIO';
 const DYNAMIC_STYLE_ROOT = document.getElementById('export-box');
 
 const GRADIENTS = [
-    '#0b0c0e', // Dark charcoal/black
-    '#1c0f0a', // Warm burnt umber dark
-    '#0a141c', // Deep oceanic blue
-    '#0d140e', // Deep forest green
-    '#170b13', // Deep plum
+    '#0b0c0e', // Dark charcoal
+    '#1a100c', // Dark Bronze / Warm
+    '#0f171e', // Deep Navy / Amazon
+    '#121613', // Deep Forest / Matrix
+    '#1c1216', // Deep Rose / Wine
     'radial-gradient(circle at center, #1e1e3f 0%, #0b0c0e 100%)',
 ];
 
-const ACCENTS = ['#ff8000', '#00e054', '#00b1f1', '#ff4d4d', '#ffffff', '#ffd700'];
+const ACCENTS = [
+    '#E4CDA7', // Premium Champagne Gold
+    '#FF8000', // Letterboxd Orange
+    '#00E054', // Letterboxd Green
+    '#00B1F1', // Letterboxd Blue
+    '#D9534F', // Soft Crimson
+    '#E2E8F0', // Platinum Silver
+    '#FBBF24', // Amber
+    '#A78BFA'  // Elegant Lavender
+];
 
-function init() {
-    populateData();
+async function init() {
+    await populateData();
     renderControls();
     attachListeners();
     // Default to template 01
@@ -30,12 +39,35 @@ function setImages(selector, src) {
     document.querySelectorAll(selector).forEach(el => el.src = src);
 }
 
-function populateData() {
-    // Basic Mapping
-    setImages('.cv-poster', entry.posterUrl || '');
+async function populateData() {
+    // 1. Text Mapping
     setText('.cv-title', entry.movieTitle || 'UNKNOWN');
     setText('.cv-year', entry.movieYear || '');
     setText('.cv-user', username.toUpperCase());
+    
+    // 2. High-Res Image Fetching (TMDB API via Backend)
+    let finalPoster = entry.posterUrl || '';
+    try {
+        const res = await fetch(`/api/tmdb/search?query=${encodeURIComponent(entry.movieTitle)}`);
+        const data = await res.json();
+        if (data && data.results && data.results.length > 0) {
+            let match = data.results[0];
+            if (entry.movieYear) {
+                const yearMatch = data.results.find(r => r.release_date && r.release_date.startsWith(entry.movieYear));
+                if (yearMatch) match = yearMatch;
+            }
+            if (match.poster_path) {
+                finalPoster = `https://image.tmdb.org/t/p/w780${match.poster_path}`;
+            }
+        }
+    } catch (e) {
+        console.warn("TMDB fetch failed, using fallback RSS poster.");
+    }
+
+    // 3. SECURE IMAGE PROXY (Crucial for html-to-image CORS)
+    if (finalPoster) {
+        setImages('.cv-poster', `/api/proxy-image?url=${encodeURIComponent(finalPoster)}`);
+    }
     
     // Rating Stars
     const fullStars = Math.max(0, Math.floor(entry.rating || 0));
@@ -113,6 +145,27 @@ function attachListeners() {
             // Show target template
             const targetId = btn.getAttribute('data-tpl');
             document.getElementById(targetId).classList.remove('hidden');
+        };
+    });
+
+    // Review Bubble Switch Logic
+    document.querySelectorAll('.rev-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.rev-btn').forEach(b => {
+                b.classList.remove('active', 'border-accent', 'opacity-100');
+                b.classList.add('opacity-50', 'border-white/5');
+            });
+            btn.classList.add('active', 'border-accent', 'opacity-100');
+            btn.classList.remove('opacity-50', 'border-white/5');
+
+            const style = btn.getAttribute('data-rev');
+            const revContainers = document.querySelectorAll('.cv-rev-container, .cv-review-text');
+            
+            if (style === 'none') {
+                revContainers.forEach(el => el.classList.add('!hidden'));
+            } else {
+                revContainers.forEach(el => el.classList.remove('!hidden'));
+            }
         };
     });
 
