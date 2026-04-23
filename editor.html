@@ -209,9 +209,9 @@
                 <div class="grid grid-cols-2 gap-3">
                     <button class="tpl-btn p-4 rounded-xl border border-white/5 bg-white/[0.02] text-[9.5px] font-black uppercase text-white/50 tracking-[0.1em] hover:bg-white/5 hover:text-white/80 transition-all" data-tpl="tpl-01">Full Bleed</button>
                     <button class="tpl-btn p-4 rounded-xl border border-white/5 bg-white/[0.02] text-[9.5px] font-black uppercase text-white/50 tracking-[0.1em] hover:bg-white/5 hover:text-white/80 transition-all" data-tpl="tpl-02">Title Gradient</button>
-                    <button class="tpl-btn p-4 rounded-xl border border-white/5 bg-white/[0.02] text-[9.5px] font-black uppercase text-white/50 tracking-[0.1em] hover:bg-white/5 hover:text-white/80 transition-all hidden" data-tpl="tpl-03">Split Card</button>
+                    <button class="tpl-btn p-4 rounded-xl border border-white/5 bg-white/[0.02] text-[9.5px] font-black uppercase text-white/50 tracking-[0.1em] hover:bg-white/5 hover:text-white/80 transition-all" data-tpl="tpl-03">Split Card</button>
                     <button class="tpl-btn p-4 rounded-xl border-accent bg-accent/5 text-[9.5px] font-black uppercase text-accent tracking-[0.1em] transition-all shadow-[0_0_15px_rgba(0,224,84,0.1)_inset]" data-tpl="tpl-04">Minimal Centered</button>
-                    <button class="tpl-btn p-4 rounded-xl border border-white/5 bg-white/[0.02] text-[9.5px] font-black uppercase text-white/50 tracking-[0.1em] hover:bg-white/5 hover:text-white/80 transition-all" data-tpl="tpl-03">Monthly</button>
+                    <button class="tpl-btn p-4 rounded-xl border border-white/5 bg-white/[0.02] text-[9.5px] font-black uppercase text-white/50 tracking-[0.1em] hover:bg-white/5 hover:text-white/80 transition-all col-span-2" data-tpl="tpl-05">Monthly</button>
                 </div>
             </section>
 
@@ -237,6 +237,19 @@
                 </div>
             </section>
 
+            <!-- Month Selector (For Monthly Template) -->
+            <section id="monthly-controls-section" class="hidden">
+                <h3 class="text-[8.5px] uppercase tracking-[0.25em] font-black text-white/40 mb-4 flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Target Month
+                </h3>
+                <div class="relative">
+                    <select id="month-selector" class="w-full bg-[#050505] border border-white/5 rounded-xl p-4 text-[10px] font-black text-white/90 uppercase tracking-widest appearance-none outline-none focus:border-accent transition-colors cursor-pointer shadow-[0_5px_20px_rgba(0,0,0,0.5)]"></select>
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </section>
+
             <!-- Content Elements -->
             <section>
                 <h3 class="text-[8.5px] uppercase tracking-[0.25em] font-black text-white/40 mb-4 flex items-center gap-2">
@@ -247,10 +260,9 @@
                         <button class="flex items-center justify-center gap-2 p-3 rounded-xl border border-white/5 bg-black/30 text-[9.5px] font-bold text-white/70 hover:text-white transition-colors" onclick="window.location.href='/index.html'">
                             <i data-lucide="users" class="w-3.5 h-3.5"></i> Change User
                         </button>
-                        <button id="btn-custom-poster" class="flex items-center justify-center gap-2 p-3 rounded-xl border border-white/5 bg-black/30 text-[9.5px] font-bold text-white/70 hover:text-white transition-colors">
-                            <i data-lucide="image" class="w-3.5 h-3.5"></i> Custom Poster
+                        <button id="btn-alt-poster" class="flex items-center justify-center gap-2 p-3 rounded-xl border border-white/5 bg-black/30 text-[9.5px] font-bold text-white/70 hover:text-white transition-colors">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Custom Poster
                         </button>
-                        <input type="file" id="poster-upload" accept="image/png, image/jpeg, image/webp" class="hidden">
                     </div>
                     <div class="flex items-center justify-between px-4 py-3 bg-black/20 rounded-xl cursor-pointer hover:bg-white/5 transition-colors" id="toggle-review">
                         <span class="text-[10.5px] font-black text-white/80 tracking-wide">Show Review</span>

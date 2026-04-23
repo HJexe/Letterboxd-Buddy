@@ -2,6 +2,12 @@ let entry = JSON.parse(sessionStorage.getItem('lb_selected') || 'null');
 const entriesRaw = JSON.parse(sessionStorage.getItem('lb_entries') || '[]');
 const username = sessionStorage.getItem('lb_username') || 'STUDIO';
 
+// State for custom poster cycling via Fanart TV
+let currentTmdbId = null;
+let alternatePosters = [];
+let altPosterIndex = 0;
+let isFetchingAltPosters = false;
+
 function parseRawItem(item) {
     if (!item) return {};
     const fullTitle = (item.title || "").toString();
@@ -105,15 +111,72 @@ function setImages(selector, src) {
     document.querySelectorAll(selector).forEach(el => el.src = src);
 }
 
+function populateMonthSelector() {
+    const selector = document.getElementById('month-selector');
+    if (!selector || entriesRaw.length === 0) return;
+
+    if (selector.options.length <= 1 && selector.options[0].value === "test") {
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const availableMonths = new Set();
+        const monthData = [];
+
+        entriesRaw.forEach(e => {
+            if(!e.pubDate) return;
+            const d = new Date(e.pubDate);
+            if(isNaN(d.valueOf())) return;
+            const label = `${months[d.getMonth()]} ${d.getFullYear()}`;
+            const val = `${d.getFullYear()}-${d.getMonth()}`;
+            if(!availableMonths.has(val)) {
+                availableMonths.add(val);
+                monthData.push({ label, val });
+            }
+        });
+
+        selector.innerHTML = monthData.map((m, i) => `<option value="${m.val}" ${i === 0 ? 'selected' : ''}>${m.label}</option>`).join('');
+        
+        selector.onchange = () => {
+            renderMonthlyTemplate();
+        };
+    }
+}
+
 function renderMonthlyTemplate() {
+    populateMonthSelector();
     const grid = document.getElementById('monthly-grid');
+    const selector = document.getElementById('month-selector');
     if (!grid) return;
     grid.innerHTML = '';
     
-    // Top 9 latest entries to fit the 3x3 layout safely
-    const top9 = entriesRaw.slice(0, 9);
+    let targetMonth = "Archive";
+    let targetYear = "";
     
-    top9.forEach((e, i) => {
+    let filtered = entriesRaw;
+    if(selector && selector.value && selector.value !== "test") {
+        filtered = entriesRaw.filter(e => {
+            if(!e.pubDate) return false;
+            const d = new Date(e.pubDate);
+            if(isNaN(d.valueOf())) return false;
+            return `${d.getFullYear()}-${d.getMonth()}` === selector.value;
+        });
+        
+        const [y, m] = selector.value.split('-');
+        const monthsNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        targetYear = y;
+        targetMonth = monthsNames[parseInt(m)];
+    } else if (entriesRaw.length > 0) {
+        // Fallback to first available item's date if selection failed or was uninitialized
+        const d = new Date(entriesRaw[0].pubDate);
+        if(!isNaN(d.valueOf())) {
+            const monthsNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            targetYear = d.getFullYear();
+            targetMonth = monthsNames[d.getMonth()];
+        }
+    }
+
+    // Top 6 latest entries from that specific month
+    const top6 = filtered.slice(0, 6);
+    
+    top6.forEach((e, i) => {
         const item = parseRawItem(e);
         let heartHTML = item.rating >= 4 ? `<span class="text-white ml-0.5" style="font-size:7px;">♥</span>` : '';
         const fullStars = Math.max(0, Math.floor(item.rating));
@@ -130,7 +193,6 @@ function renderMonthlyTemplate() {
                 <div class="flex items-center">
                     <span class="tracking-widest">${ratingStr}</span> ${heartHTML}
                 </div>
-                <span class="text-white/40">${top9.length - i}</span>
             </div>
         `;
         grid.appendChild(cell);
@@ -164,16 +226,6 @@ function renderMonthlyTemplate() {
             .catch(e => console.warn(e));
     });
 
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    let targetMonth = "Archive";
-    let targetYear = "";
-    if (top9.length > 0) {
-        const d = new Date(top9[0].pubDate);
-        if (!isNaN(d.valueOf())) {
-            targetMonth = months[d.getMonth()];
-            targetYear = d.getFullYear();
-        }
-    }
     const titleEl = document.getElementById('monthly-title');
     if (titleEl) titleEl.innerText = `${targetMonth} ${targetYear}`;
 }
@@ -193,8 +245,15 @@ async function populateData() {
                 const yearMatch = data.results.find(r => r.release_date && r.release_date.startsWith(entry.movieYear));
                 if (yearMatch) match = yearMatch;
             }
+            
+            // Capture for alt posters
+            currentTmdbId = match.id;
+            alternatePosters = [];
+            altPosterIndex = 0;
+
             if (match.poster_path) {
                 finalPoster = `https://image.tmdb.org/t/p/w780${match.poster_path}`;
+                alternatePosters.push(finalPoster);
             }
         }
     } catch (e) {
@@ -287,14 +346,25 @@ function attachListeners() {
         btn.onclick = () => {
             // Reset
             document.querySelectorAll('.tpl-btn').forEach(b => {
-                b.className = 'tpl-btn p-4 rounded-xl border border-white/5 bg-white/[0.02] text-[9.5px] font-black uppercase text-white/50 tracking-[0.1em] hover:bg-white/5 hover:text-white/80 transition-all';
+                const colSpan = b.getAttribute('data-tpl') === 'tpl-05' ? ' col-span-2' : '';
+                b.className = 'tpl-btn p-4 rounded-xl border border-white/5 bg-white/[0.02] text-[9.5px] font-black uppercase text-white/50 tracking-[0.1em] hover:bg-white/5 hover:text-white/80 transition-all' + colSpan;
             });
             // Activate current
-            btn.className = 'tpl-btn p-4 rounded-xl border-accent bg-accent/5 text-[9.5px] font-black uppercase text-accent tracking-[0.1em] transition-all shadow-[0_0_15px_rgba(var(--accent-color),0.1)_inset]';
+            const activeColSpan = btn.getAttribute('data-tpl') === 'tpl-05' ? ' col-span-2' : '';
+            btn.className = 'tpl-btn p-4 rounded-xl border-accent bg-accent/5 text-[9.5px] font-black uppercase text-accent tracking-[0.1em] transition-all shadow-[0_0_15px_rgba(var(--accent-color),0.1)_inset]' + activeColSpan;
 
             document.querySelectorAll('.tpl-layer').forEach(layer => layer.classList.add('hidden'));
             const targetId = btn.getAttribute('data-tpl');
             document.getElementById(targetId).classList.remove('hidden');
+            
+            const monthControls = document.getElementById('monthly-controls-section');
+            if (monthControls) {
+                if (targetId === 'tpl-05') {
+                    monthControls.classList.remove('hidden');
+                } else {
+                    monthControls.classList.add('hidden');
+                }
+            }
         };
     });
 
@@ -331,17 +401,53 @@ function attachListeners() {
         lucide.createIcons();
     };
 
-    // Custom Poster Upload Logic
-    const btnCustomPoster = document.getElementById('btn-custom-poster');
-    const inputPosterUpload = document.getElementById('poster-upload');
-    
-    if (btnCustomPoster && inputPosterUpload) {
-        btnCustomPoster.onclick = () => inputPosterUpload.click();
-        inputPosterUpload.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const objectUrl = URL.createObjectURL(file);
-            setImages('.cv-poster', objectUrl); // Update all templates
+    // Alternate Poster Logic (Fanart.tv)
+    const btnAltPoster = document.getElementById('btn-alt-poster');
+    if (btnAltPoster) {
+        btnAltPoster.onclick = async () => {
+            if (!currentTmdbId) return alert('No TMDB ID found for this movie to fetch alternate posters.');
+            if (isFetchingAltPosters) return;
+            
+            isFetchingAltPosters = true;
+            const ogHtml = btnAltPoster.innerHTML;
+            btnAltPoster.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> FETCHING...';
+            lucide.createIcons();
+
+            try {
+                // Fetch fanart only on the first cycle query
+                if (alternatePosters.length <= 1) {
+                    const res = await fetch(`/api/fanart/movie/${currentTmdbId}`);
+                    const data = await res.json();
+                    if (data && data.movieposter && data.movieposter.length > 0) {
+                        const altUrls = data.movieposter.map(p => p.url);
+                        alternatePosters = [...alternatePosters, ...altUrls];
+                    }
+                }
+
+                if (alternatePosters.length > 1) {
+                    altPosterIndex = (altPosterIndex + 1) % alternatePosters.length;
+                    const nextPoster = alternatePosters[altPosterIndex];
+                    
+                    // Proxy as base64 for export reliability
+                    const fetchUrl = `/api/proxy-image?url=${encodeURIComponent(nextPoster)}`;
+                    const imgRes = await fetch(fetchUrl);
+                    const blob = await imgRes.blob();
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setImages('.cv-poster', reader.result);
+                    };
+                    reader.readAsDataURL(blob);
+                } else {
+                    alert('No textless/alternate posters found on Fanart.tv for this specific film.');
+                }
+            } catch (err) {
+                console.error("Alt poster fetch failed:", err);
+                alert("Could not fetch alternate posters.");
+            } finally {
+                isFetchingAltPosters = false;
+                btnAltPoster.innerHTML = ogHtml;
+                lucide.createIcons();
+            }
         };
     }
 
