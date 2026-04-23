@@ -16,18 +16,41 @@ export const Canvas = ({ state }: CanvasProps) => {
   const downloadImage = async () => {
     if (!canvasRef.current) return;
     try {
+      // Step 1: Attempt high-quality capture with high pixel ratio
       const dataUrl = await toPng(canvasRef.current, { 
         quality: 1.0, 
-        pixelRatio: 3,
+        pixelRatio: 2,
         cacheBust: true,
-        includeGraphics: true,
+        // Using includeGraphics or similar isn't standard for toPng but we keep it safe
+        style: {
+          transform: 'scale(1)',
+        },
       });
+      
       const link = document.createElement("a");
       link.download = `letterboxd-${entry?.movieTitle.toLowerCase().replace(/\s+/g, "-") || 'wrapup'}.png`;
       link.href = dataUrl;
       link.click();
-    } catch (err) {
-      console.error("Download failed:", err);
+    } catch (err: any) {
+      console.warn("Standard download failed, attempting stable fallback:", err);
+      
+      try {
+        // Step 2: Fallback to more stable options (skip fonts, no cache bust)
+        const fallbackUrl = await toPng(canvasRef.current!, { 
+          quality: 0.95, 
+          pixelRatio: 2,
+          skipFonts: true, // This bypasses the cross-origin stylesheet issue entirely
+          cacheBust: true,
+        });
+        
+        const link = document.createElement("a");
+        link.download = `letterboxd-${entry?.movieTitle.toLowerCase().replace(/\s+/g, "-") || 'wrapup'}-fixed.png`;
+        link.href = fallbackUrl;
+        link.click();
+      } catch (retryErr: any) {
+        console.error("Critical download failure:", retryErr);
+        alert("We encountered an issue generating your image. Try taking a screenshot or using Chrome for better results.");
+      }
     }
   };
 
