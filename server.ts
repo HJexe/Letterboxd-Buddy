@@ -18,35 +18,38 @@ async function startServer() {
   // Proxy for Letterboxd RSS with hardened headers to avoid blocking
   app.get("/api/letterboxd/:username", async (req, res) => {
     const { username } = req.params;
-    try {
-      // Use axios to fetch with custom headers as Letterboxd blocks default RSS parsers
-      const response = await axios.get(`https://letterboxd.com/${username}/rss/`, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
-          'Cache-Control': 'no-cache',
-        },
-        timeout: 10000, // 10s timeout
-      });
-      
-      const feed = await parser.parseString(response.data);
-      res.json(feed);
-    } catch (error: any) {
-      console.error("RSS Fetch Error for", username, ":", error.message);
-      
-      // Attempt fallback if direct fetch fails (sometimes https vs http or redirect issues)
+    const rssUrl = `https://letterboxd.com/${username}/rss/`;
+    
+    // List of UA to try in sequence
+    const userAgents = [
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Letterboxd/3.0 (iPhone; iOS 17.0; Scale/3.00)',
+      'RSS-Parser/3.13.0',
+    ];
+
+    for (const [idx, ua] of userAgents.entries()) {
       try {
-        const fallbackResponse = await axios.get(`https://letterboxd.com/${username}/rss/`, {
-          headers: { 'User-Agent': 'Letterboxd/3.0 (iPhone; iOS 17.0; Scale/3.00)' }
+        const response = await axios.get(rssUrl, {
+          headers: {
+            'User-Agent': ua,
+            'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+          timeout: 8000,
         });
-        const feed = await parser.parseString(fallbackResponse.data);
+        
+        const feed = await parser.parseString(response.data);
         return res.json(feed);
-      } catch (fallbackError: any) {
-        res.status(500).json({ 
-          error: "Failed to fetch Letterboxd feed", 
-          details: error.message,
-          suggestion: "Letterboxd might be blocking this request. Ensure the username is correct and public."
-        });
+      } catch (error: any) {
+        console.warn(`RSS attempt ${idx + 1} failed for ${username}: ${error.message}`);
+        if (idx === userAgents.length - 1) {
+           return res.status(error.response?.status || 500).json({ 
+             error: "Profile not found or access denied", 
+             details: error.message,
+             suggestion: "Make sure the username is correct and the diary is public."
+           });
+        }
       }
     }
   });
@@ -97,7 +100,7 @@ async function startServer() {
 
   app.get("/api/fanart/movie/:id", async (req, res) => {
     const { id } = req.params;
-    const apiKey = process.env.FANART_API_KEY;
+    const apiKey = process.env.FANART_TV_API || process.env.FANART_API_KEY;
 
     if (!apiKey) {
       return res.json({ movieposter: [], info: "Fanart API key not configured" });
