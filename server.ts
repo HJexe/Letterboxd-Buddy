@@ -39,23 +39,24 @@ async function startServer() {
           const response = await axios.get(rssUrl, {
             headers: {
               'User-Agent': ua,
-              'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
+              'Accept': 'text/xml,application/xml,application/rss+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5',
+              'Accept-Language': 'en-US,en;q=0.9',
               'Cache-Control': 'no-cache',
               'Pragma': 'no-cache',
               'Referer': 'https://letterboxd.com/',
-              'Origin': 'https://letterboxd.com',
             },
-            timeout: 10000,
+            timeout: 12000,
+            validateStatus: (status) => status < 500, // Handle 404s gracefully in code
           });
           
-          if (response.data && response.data.includes('letterboxd.com')) {
+          if (response.status === 200 && response.data && response.data.includes('<rss')) {
             const feed = await parser.parseString(response.data);
             return res.json(feed);
           }
         } catch (error: any) {
-          console.warn(`RSS attempt failed for ${username} at ${rssUrl}: ${error.message}`);
+          console.warn(`RSS attempt failed for ${username} at ${rssUrl} with ${ua}: ${error.message}`);
         }
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 

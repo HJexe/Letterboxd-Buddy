@@ -12,20 +12,24 @@ document.getElementById('fetch-form').addEventListener('submit', async (e) => {
 
     try {
         const response = await fetch(`/api/letterboxd/${username}`);
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
         
-        if (!response.ok) {
-            throw new Error(data.error || 'User not found or profile access denied');
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'User not found or profile access denied');
+            }
+            
+            // Store data and username for the next page
+            sessionStorage.setItem('lb_username', username);
+            sessionStorage.setItem('lb_entries', JSON.stringify(data.items || []));
+            
+            // Redirect to gallery
+            window.location.href = '/gallery.html';
+        } else {
+            // Handle non-JSON response (likely HTML error from server)
+            throw new Error('SERVER RETURNED INVALID DATA. PLEASE TRY AGAIN LATER.');
         }
-        
-        const feed = data;
-        
-        // Store data and username for the next page
-        sessionStorage.setItem('lb_username', username);
-        sessionStorage.setItem('lb_entries', JSON.stringify(feed.items));
-        
-        // Redirect to gallery
-        window.location.href = '/gallery.html';
     } catch (err) {
         errorEl.innerText = err.message.toUpperCase();
         errorEl.classList.remove('hidden');
